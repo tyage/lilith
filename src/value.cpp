@@ -35,13 +35,18 @@ size_t const cell_size = sizeof(Value);
 Value nil() {
   return 0;
 }
+
+Value make_symbol(char const* name) {
+  size_t len = std::strlen(name);
+  char* p = static_cast<char*>(alloc(len + 1));
+  std::strcpy(p, name);
+  return to_Value(p) | 0b10;
+
+}
+
 Value t() {
   // 毎回異なる `#t` が産まれて愉快。
-  char* p = static_cast<char*>(alloc(3));
-  p[0] = '#';
-  p[1] = 't';
-  p[2] = '\0';
-  return to_Value(p) | 0b10;
+  return make_symbol("#t");
 }
 
 Value make_cons(Value car, Value cdr) {
