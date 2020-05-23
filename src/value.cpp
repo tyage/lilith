@@ -134,6 +134,7 @@ Value define_variable(Value name, Value def, Value env) {
 Value initial_env() {
   Value env = make_cons(nil(), nil());
   env = define_variable(t(), t(), env); // 1つ目のtはquoteしないといけない？ // ↑ のunquoteと打ち消されるのでどっちもなしで良い気もする？
+  env = define_variable(make_symbol("nil"), nil(), env);
 
   return env;
 }

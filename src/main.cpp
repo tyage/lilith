@@ -1,6 +1,8 @@
 #include <iostream>
 #include "value.hpp"
 
+Value make_symbol(char const*); // internal func
+
 int main(int, char**) {
   std::cout << "sizeof(Value) = " << sizeof(Value) << std::endl;
   auto cons = make_cons(to_Value(1), nil());
@@ -28,6 +30,10 @@ int main(int, char**) {
   std::cout << "val: "<< show(res) << std::endl;
 
   std::tie(res, env) = eval(t(), env);
+  std::cout << "##env: "<< show(env) << std::endl;
+  std::cout << "val: "<< show(res) << std::endl;
+
+  std::tie(res, env) = eval(make_symbol("nil"), env);
   std::cout << "##env: "<< show(env) << std::endl;
   std::cout << "val: "<< show(res) << std::endl;
 }
