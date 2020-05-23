@@ -17,10 +17,10 @@ void* alloc(size_t size) {
 }
 
 Value to_Value(void* v) {
-  return reinterpret_cast<Value>(v);
+  return reinterpret_cast<Value::base_t>(v);
 }
 Value* to_ptr(Value v) {
-  return reinterpret_cast<Value*>(v);
+  return reinterpret_cast<Value*>(static_cast<Value::base_t>(v));
 }
 
 size_t const cell_size = sizeof(Value);
