@@ -3,15 +3,7 @@
 #include <string>
 #include <cstdint>
 
-class Value {
-public:
-  using base_t = std::uintptr_t;
-  Value(base_t v_) : v(v_) {}
-  operator base_t() const { return v; }
-  base_t operator |=(base_t other) { return v | other; }
-private:
-  base_t v;
-};
+using Value = std::uintptr_t;
 
 Value nil();
 Value t();

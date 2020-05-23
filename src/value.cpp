@@ -17,10 +17,10 @@ void* alloc(size_t size) {
 }
 
 Value to_Value(void* v) {
-  return reinterpret_cast<Value::base_t>(v);
+  return reinterpret_cast<Value>(v);
 }
 Value* to_ptr(Value v) {
-  return reinterpret_cast<Value*>(static_cast<Value::base_t>(v));
+  return reinterpret_cast<Value*>(v);
 }
 
 size_t const cell_size = sizeof(Value);
@@ -73,7 +73,7 @@ Value atom(Value v) {
   return t();
 }
 
-Value fromBool(bool b) {
+Value from_bool(bool b) {
   return b ? t() : nil();
 }
 
@@ -85,9 +85,9 @@ Value eq(Value lhs, Value rhs) {
   switch(t) {
   case ValueType::Cons:
   case ValueType::Integer:
-    return fromBool(lhs == rhs);
+    return from_bool(lhs == rhs);
   default:
-    return fromBool(lhs == rhs); // 嘘: ポインタを辿って比較する必要がある。
+    return from_bool(lhs == rhs); // 嘘: ポインタを辿って比較する必要がある。
   }
 }
 
