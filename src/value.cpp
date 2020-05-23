@@ -65,7 +65,7 @@ enum class ValueType {
 };
 
 ValueType type(Value v) {
-  switch(v & 3) {
+  switch(v & 3) { // 下2bit
   case 0:
     return ValueType::Cons;
   case 1:
@@ -162,6 +162,7 @@ Value find(Value name, Value env) {
 }
 
 std::tuple<Value, Value> eval(Value v, Value env) {
+  // 多分evalの実装にvalueの詳細が必要なことはないので、別のファイルに切り出す。
   if(self_eval(v)) {
     return std::make_tuple(v, env);
   }
