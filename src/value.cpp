@@ -4,15 +4,22 @@
 // 下2bitが
 //   00 ポインタ(この時cons cellである)
 //   01 数字(上位bitにsigned int(最上位が1なら負))
-//   10 シンボル(上位bitをアドレスだと思って指した先にnull terminated stringで名前が入っている)
+//   10 Symbol(上位bitをアドレスだと思って指した先にnull terminated stringで名前が入っている)
 //   11 undef(最後まで余ってたら、↑をshort string optimizationする？)
+
+// nil以外はtruety
+
+// envとは？
+//   (assoc . parent)
 
 #include <sstream>
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 
 void* alloc(size_t size) {
-  // あとで置き換える。
+  // あとで置き換える。 GCを書きたくてlispを書きはじめたので……。
+  // 今は全部おもらし。
   return std::malloc(size);
 }
 
@@ -29,10 +36,12 @@ Value nil() {
   return 0;
 }
 Value t() {
-  char* p = static_cast<char*>(alloc(2));
-  p[0] = 't';
-  p[1] = '\0';
-  return to_Value(p);
+  // 毎回異なる `#t` が産まれて愉快。
+  char* p = static_cast<char*>(alloc(3));
+  p[0] = '#';
+  p[1] = 't';
+  p[2] = '\0';
+  return to_Value(p) | 0b10;
 }
 
 Value make_cons(Value car, Value cdr) {
@@ -66,18 +75,28 @@ ValueType type(Value v) {
   }
 }
 
-Value atom(Value v) {
-  if(type(v) == ValueType::Cons) {
-    return nil();
-  }
-  return t();
-}
-
 Value from_bool(bool b) {
   return b ? t() : nil();
 }
+bool to_bool(Value v) {
+  return v != nil();
+}
 
-Value eq(Value lhs, Value rhs) {
+char const* c_str(Value v) {
+  assert(type(v) == ValueType::Symbol);
+  return reinterpret_cast<char const*>(v - 0b10);
+}
+
+
+Value atom(Value v) {
+  return from_bool(type(v) == ValueType::Cons);
+}
+
+bool symbol_eq_bool(Value lhs, Value rhs) {
+  return std::strcmp(c_str(lhs), c_str(rhs)) == 0;
+}
+
+bool eq_bool(Value lhs, Value rhs) {
   auto const t = type(lhs);
   if(t != type(rhs)) {
     return nil();
@@ -85,10 +104,71 @@ Value eq(Value lhs, Value rhs) {
   switch(t) {
   case ValueType::Cons:
   case ValueType::Integer:
-    return from_bool(lhs == rhs);
+    return lhs == rhs;
   default:
-    return from_bool(lhs == rhs); // 嘘: ポインタを辿って比較する必要がある。
+    return symbol_eq_bool(lhs, rhs);
   }
+}
+
+Value eq(Value lhs, Value rhs) {
+  return from_bool(eq_bool(lhs, rhs));
+}
+
+bool self_eval(Value v) {
+  return type(v) == ValueType::Integer;
+}
+
+Value define_variable(Value name, Value def, Value env) {
+  Value assoc = car(env);
+  Value parent = cdr(env);
+  Value pair = make_cons(name, def); // ここnameをunquoteしないといけないかも？
+  Value new_assoc = make_cons(pair, assoc); // assocの先頭につっこんでおけば更新もできるし、追加もできる。
+  return make_cons(new_assoc, parent);
+}
+
+Value initial_env() {
+  Value env = make_cons(nil(), nil());
+  env = define_variable(t(), t(), env); // 1つ目のtはquoteしないといけない？ // ↑ のunquoteと打ち消されるのでどっちもなしで良い気もする？
+
+  return env;
+}
+
+// assoc listの中から該当の名前をもつものがあるかどうかを探す。
+// みつかった時は `(name . val)` を返し、なかった時は `nil` を返す。
+Value lookup(Value name, Value list) {
+  while(list != nil()) {
+    Value const candidate = car(list);
+    if(eq_bool(name, car(candidate))) {
+      return candidate;
+    }
+    list = cdr(list);
+  }
+  return nil();
+}
+
+Value find(Value name, Value env) {
+  Value assoc = car(env);
+  Value parent = cdr(env);
+
+  Value res = lookup(name, assoc);
+  if(res != nil()) {
+    return cdr(res);
+  }
+  if(parent != nil()) {
+    return find(name, parent);
+  }
+
+  throw "unbound variable";
+}
+
+std::tuple<Value, Value> eval(Value v, Value env) {
+  if(self_eval(v)) {
+    return std::make_tuple(v, env);
+  }
+  if(type(v) == ValueType::Symbol) { // variable
+    return std::make_tuple(find(v, env), env);
+  }
+  throw "pie";
 }
 
 std::int64_t to_int(Value v) {
@@ -101,9 +181,9 @@ std::int64_t to_int(Value v) {
 }
 
 Value to_Value(std::int64_t v) {
-  Value res = v << 2;
+  Value res(static_cast<std::uint64_t>(v) << 2);
   if(v < 0) {
-    res = (-v) << 2;
+    res = Value(static_cast<std::uint64_t>(-v) << 2);
     res |= 1LL << 63; // set sign
   }
   res |= 1; // set type
@@ -136,6 +216,6 @@ std::string show(Value v) {
     ss << to_int(v);
     return ss.str();
   default:
-    1;
+    return c_str(v);
   }
 }

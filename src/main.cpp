@@ -19,4 +19,15 @@ int main(int, char**) {
   std::cout << show(cons) << std::endl;
   cons = make_cons(to_Value(1), to_Value(2));
   std::cout << show(cons) << std::endl;
+
+  auto env = initial_env();
+  Value res;
+
+  std::tie(res, env) = eval(to_Value(0), env);
+  std::cout << "##env: "<< show(env) << std::endl;
+  std::cout << "val: "<< show(res) << std::endl;
+
+  std::tie(res, env) = eval(t(), env);
+  std::cout << "##env: "<< show(env) << std::endl;
+  std::cout << "val: "<< show(res) << std::endl;
 }
