@@ -1,0 +1,3 @@
+TARGET := lilith
+CP := cp -f
+RM := rm -f
