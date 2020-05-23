@@ -10,6 +10,10 @@ $(TARGET): build
 build:
 	$(MAKE) -C $(SRCDIR) build
 
+debug:
+	$(MAKE) -C $(SRCDIR) debug
+	$(CP) $(SRCDIR)/$(TARGET) .
+
 .PHONY: clean clean_src
 clean: clean_src
 	$(RM) $(TARGET)
