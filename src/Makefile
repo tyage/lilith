@@ -5,11 +5,15 @@ OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 
 CXXFLAGS := -Wall -Wextra
+-include $(DEPS)
 
 build: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -MMD -MP $<
 
 debug: CXXFLAGS += -DDEBUG -g
 debug: $(OBJS)
