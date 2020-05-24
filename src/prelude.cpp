@@ -269,3 +269,101 @@ std::tuple<Value, Value> eval(Value v, Value env) {
   }
   throw "pie";
 }
+
+bool is_digit(char c) {
+  return '0' <= c && c <= '9';
+}
+
+Value read_number(std::istream& is) {
+  int peek;
+  std::int64_t res{};
+  while(peek = is.peek(), is_digit(peek)) {
+    res = res * 10 + peek - '0';
+    is.get();
+  }
+  return to_Value(res);
+}
+
+Value reverse_impl(Value list, Value res) {
+  if(list == nil()) return res;
+  return reverse_impl(cdr(list), make_cons(car(list), res));
+}
+Value reverse(Value list) {
+  return reverse_impl(list, nil());
+}
+
+Value read_list(std::istream& is) {
+  is.get(); // '('
+  Value l = nil();
+  while(is.peek() != ')') {
+    Value v = read(is);
+    l = make_cons(v, l);
+  }
+  is.get(); // ')'
+  return reverse(l);
+}
+
+bool is_spaces(char c) {
+  return c == ' ' || c == '\n';
+}
+
+bool is_alpha(char c) {
+  return ('a' <= c && c <= 'z')
+      || ('A' <= c && c <= 'Z');
+}
+
+bool is_identifier_start(char c) {
+  return is_alpha(c) || c == '*' || c == '_' || c == '-';
+}
+
+bool is_identifier_char(char c) {
+  return is_identifier_start(c) || is_digit(c);
+}
+
+size_t const MAX_ID_LEN = 128;
+Value read_identifier(std::istream& is) {
+  char buf[MAX_ID_LEN] = {}; // あとで動的に確保したい。
+  // どうせこの後確保するから良いか？
+
+  size_t len{};
+  char peek;
+  while(len < MAX_ID_LEN - 1) {
+    peek = is.peek();
+    if(!is_identifier_char(peek)) break;
+    buf[len++] = is.get();
+  }
+  return make_symbol(buf);
+}
+
+Value read(std::istream& is) {
+  int peek = is.peek();
+  while(is_spaces(peek)) {
+    is.get();
+    peek = is.peek();
+  }
+  if(peek == EOF) throw nil();
+  if(is_digit(peek)) {
+    return read_number(is);
+  }
+  if(peek == '(') {
+    return read_list(is);
+  }
+  if(is_identifier_start(peek)) {
+    return read_identifier(is);
+  }
+
+  throw "a";
+  return nil();
+}
+
+[[noreturn]] void repl(std::istream& is) {
+  Value env = initial_env();
+  Value res;
+  while(true) {
+    std::cout << "> ";
+    Value input = read(is);
+    std::cout << "# => " << show(input) << std::endl;
+    std::tie(res, env) = eval(input, env);
+    std::cout << show(res) << std::endl;
+  }
+}

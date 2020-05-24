@@ -2,6 +2,8 @@
 
 #include "value.hpp"
 
+#include <iostream>
+
 Value t();
 Value quote(Value v);
 
@@ -23,3 +25,6 @@ template<typename T, class...Args>
 inline Value list(T v, Args&&...args) {
   return make_cons(to_Value_(v), list(std::forward<Args>(args)...));
 }
+
+Value read(std::istream&);
+[[noreturn]] void repl(std::istream&);

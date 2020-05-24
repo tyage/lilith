@@ -1,9 +1,14 @@
 #include <iostream>
 #include "prelude.hpp"
 
-Value make_symbol(char const*); // internal func
-
-int main(int, char**) {
+int main(int argc, char** argv) {
+  if(argc >= 2) {
+    std::string cmd{argv[1]};
+    if(cmd == "repl") {
+      repl(std::cin);
+      return 0;
+    }
+  }
   std::cout << "sizeof(Value) = " << sizeof(Value) << std::endl;
   auto cons = make_cons(to_Value(1), nil());
   std::cout << cons << std::endl;
