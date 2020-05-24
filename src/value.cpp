@@ -6,7 +6,7 @@
 //   00 ポインタ(この時cons cellである)
 //   01 数字(上位bitにsigned int(最上位が1なら負))
 //   10 Symbol(上位bitをアドレスだと思って指した先にnull terminated stringで名前が入っている)
-//   11 lambda(上位アドレスに以下の形で入っている)
+//   11 undef
 
 // nil以外はtruety
 
@@ -54,18 +54,10 @@ Value make_cons(Value car, Value cdr) {
   return to_Value(region);
 }
 
-Value car(Value cons) {
-  return *to_ptr(cons);
-}
-Value cdr(Value cons) {
-  return *(to_ptr(cons) + 1);
-}
-
 enum class ValueType {
   Cons,
   Integer,
   Symbol,
-  Lambda,
 };
 
 ValueType type(Value v) {
@@ -75,10 +67,18 @@ ValueType type(Value v) {
   case 1:
     return ValueType::Integer;
   case 2:
+  default:
     return ValueType::Symbol;
-  case 3:
-    return ValueType::Lambda;
   }
+}
+
+Value car(Value cons) {
+  assert(type(cons) == ValueType::Cons);
+  return *to_ptr(cons);
+}
+Value cdr(Value cons) {
+  assert(type(cons) == ValueType::Cons);
+  return *(to_ptr(cons) + 1);
 }
 
 char const* c_str(Value v) {
@@ -106,7 +106,6 @@ bool eq_bool(Value lhs, Value rhs) {
   switch(t) {
   case ValueType::Cons:
   case ValueType::Integer:
-  case ValueType::Lambda:
     return lhs == rhs;
   case ValueType::Symbol:
     return symbol_eq_bool(lhs, rhs);
@@ -123,16 +122,13 @@ Value lambda(Value names, Value body, Value env) {
 }
 
 bool is_self_eval(Value v) {
-  return type(v) == ValueType::Integer || is_lambda_bool(v);
+  return type(v) == ValueType::Integer || v == nil();
 }
 bool is_symbol(Value v) {
   return type(v) == ValueType::Symbol;
 }
 bool is_variable(Value v) {
   return is_symbol(v);
-}
-bool is_lambda_bool(Value v) {
-  return type(v) == ValueType::Lambda;
 }
 
 std::int64_t to_int(Value v) {
@@ -152,22 +148,6 @@ Value to_Value(std::int64_t v) {
   }
   res |= 1; // set type
   return res;
-}
-
-Value params(Value v) {
-  assert(type(v) == ValueType::Lambda);
-  v -= 3;
-  return car(v);
-}
-Value body(Value v) {
-  assert(type(v) == ValueType::Lambda);
-  v -= 3;
-  return car(cdr(v));
-}
-Value lambda_env(Value v) {
-  assert(type(v) == ValueType::Lambda);
-  v -= 3;
-  return cdr(cdr(v));
 }
 
 Value succ(Value v) {
@@ -204,8 +184,5 @@ std::string show(Value v) {
     return ss.str();
   case ValueType::Symbol:
     return c_str(v);
-  case ValueType::Lambda:
-    ss << "#<lambda " << show(params(v)) << ": " << show(body(v)) << ">";
-    return ss.str();
   }
 }

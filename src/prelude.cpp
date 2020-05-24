@@ -3,6 +3,8 @@
 #include <array>
 #include <cassert>
 
+std::tuple<Value, Value> eval_define(Value v, Value env);
+
 Value t() {
   // 毎回異なる `#t` が産まれて愉快。
   return make_symbol("#t");
@@ -52,12 +54,24 @@ Value define_primitives(Value env) {
   return env;
 }
 
+Value prelude_lisp_defines(Value env) {
+  std::array defines = {
+    list("define", "ans", 42_i),
+    list("define", "id", list("lambda", list("x"), "x")),
+  };
+  for(auto v: defines) {
+    std::tie(std::ignore, env) = eval_define(v, env);
+  }
+  return env;
+}
+
 Value initial_env() {
   Value env = make_cons(nil(), nil());
   env = define_variable(t(), t(), env); // 1つ目のtはquoteしないといけない？ // ↑ のunquoteと打ち消されるのでどっちもなしで良い気もする？
   env = define_variable(make_symbol("nil"), nil(), env);
   env = define_primitives(env);
-  env= expand_env(env);
+  env = prelude_lisp_defines(env);
+  env = expand_env(env);
 
   return env;
 }
@@ -73,7 +87,7 @@ Value lookup(Value name, Value list) {
     list = cdr(list);
   }
   return nil();
-}
+};
 
 Value find(Value name, Value env) {
   if(env != nil()) {
@@ -137,30 +151,6 @@ Value apply_primitive(Value name, Value args) {
   throw "unknown primitive";
 }
 
-Value apply(Value f, Value args) {
-  if(is_primitive_bool(f)) {
-    Value name = car(cdr(f));
-    return apply_primitive(name, args);
-  }
-  Value params_ = params(f);
-  Value body_ = body(f);
-  Value env = lambda_env(f);
-  env = expand_env(env);
-  assert(len(args) == len(params_));
-  while(params_ != nil()) {
-    Value name = car(params_);
-    Value val = car(args);
-    env = define_variable(name, val, env);
-
-    params_ = cdr(params_);
-    args = cdr(args);
-  }
-
-  Value res;
-  std::tie(res, env) = eval(body_, env);
-  return res;
-}
-
 bool is_quoted_bool(Value v) {
   return is_tagged_list_bool(v, make_symbol("quote"));
 }
@@ -169,6 +159,81 @@ bool is_if_bool(Value v) {
 }
 bool is_define_bool(Value v) {
   return is_tagged_list_bool(v, make_symbol("define"));
+}
+bool is_lambda_bool(Value v) {
+  return is_tagged_list_bool(v, make_symbol("lambda"));
+}
+bool is_procedure_bool(Value v) {
+  return is_tagged_list_bool(v, make_symbol("procedure"));
+}
+
+Value procedure_args(Value f) {
+  assert(len(f) == 4_i);
+  return car(cdr(f));
+}
+Value procedure_body(Value f) {
+  assert(len(f) == 4_i);
+  return car(cdr(cdr(f)));
+}
+Value procedure_env(Value f) {
+  assert(len(f) == 4_i);
+  return car(cdr(cdr(cdr(f))));
+}
+#include <iostream>
+
+Value bind_args(Value params, Value args, Value env) {
+  std::cout << "xxxxxxxxxx hewe" << std::endl;
+  std::cout << "xxxxxxxxxx params: " << show(params) << std::endl;
+  std::cout << "xxxxxxxxxx args: " << show(args) << std::endl;
+  if(is_atom_bool(params)) { // `(lambda xs xs)`
+  std::cout << "xxxxxxxxxx hewe1!!1" << std::endl;
+    return define_variable(params, args, env);
+  }
+  // `(lambda (x) x)`
+    std::cout << "xxx# env-before bind!: assoc: " << show(car(env)) << std::endl;
+    std::cout << "xxx#                  parent: " << show(cdr(env)) << std::endl;
+  assert(len(params) == len(args));
+  while(params != nil()) {
+    env = define_variable(car(params), car(args), env);
+    params = cdr(params);
+    args = cdr(args);
+  }
+    std::cout << "xxx# env-after bind!: assoc: " << show(car(env)) << std::endl;
+    std::cout << "xxx#                 parent: " << show(cdr(env)) << std::endl;
+  return env;
+}
+
+bool last_exp_bool(Value exps) {
+  return cdr(exps) == nil();
+}
+
+std::tuple<Value, Value> eval_sequence(Value exps, Value env) {
+  std::cout << "seq!: " << show(exps) << std::endl;
+  if(last_exp_bool(exps)) {
+    Value exp = car(exps);
+    std::cout << "evaluating!: " << show(exp) << std::endl;
+    return eval(exp, env);
+  }
+  Value exp = car(exps);
+  std::cout << "evaluating!: " << show(exp) << std::endl;
+  std::tie(std::ignore, env) = eval(exp, env);
+  return eval_sequence(cdr(exps), env);
+}
+
+Value apply(Value f, Value args) {
+  if(is_primitive_bool(f)) {
+    Value name = car(cdr(f));
+    return apply_primitive(name, args);
+  }
+  std::cout << "#?#?# " << show(f) << std::endl;
+  if(is_procedure_bool(f)) {
+    Value env = expand_env(procedure_env(f));
+    env = bind_args(procedure_args(f), args, env);
+    std::cout << "env-after bind!: assoc: " << show(car(env)) << std::endl;
+    std::cout << "                parent: " << show(cdr(env)) << std::endl;
+    return std::get<0>(eval_sequence(procedure_body(f), env));
+  }
+  throw "ha?(apply)";
 }
 
 std::tuple<Value, Value> eval_if(Value v, Value env) {
@@ -185,13 +250,23 @@ std::tuple<Value, Value> eval_if(Value v, Value env) {
 std::tuple<Value, Value> eval_define(Value v, Value env) {
   Value names = car(cdr(v));
   Value bodies = car(cdr(cdr(v)));
-  if(is_atom_bool(names)) {
+  if(is_atom_bool(names)) { // `(define x 42)`
     assert(is_symbol(names));
     std::tie(bodies, env) = eval(bodies, env);
     env = define_variable(names, bodies, env);
     return std::make_tuple(names, env);
   }
+  // `(define (id x) x)`
   throw "unimpled yet...";
+}
+
+Value make_procedure(Value lambda, Value env) {
+  std::cout << "???? " << show(lambda) << std::endl;
+  Value args = car(cdr(lambda));
+  Value body = cdr(cdr(lambda));
+  // (lambda (x) x)
+  // (lambda list list)
+  return list("procedure", args, body, env);
 }
 
 std::tuple<Value, Value> eval(Value v, Value env) {
@@ -200,6 +275,7 @@ std::tuple<Value, Value> eval(Value v, Value env) {
   if(is_quoted_bool(v)) return std::make_tuple(unquote(v), env);
   if(is_if_bool(v)) return eval_if(v, env);
   if(is_define_bool(v)) return eval_define(v, env);
+  if(is_lambda_bool(v)) return std::make_tuple(make_procedure(v, env), env);
   if(is_application(v)) {
     Value op = car(v);
     std::tie(op, env) = eval(op, env);
@@ -207,5 +283,6 @@ std::tuple<Value, Value> eval(Value v, Value env) {
     operands = list_of_values(operands, env);
     return std::make_tuple(apply(op, operands), env);
   }
+  std::cout << "!!!! " << show(v) << std::endl;
   throw "pie";
-}
+};

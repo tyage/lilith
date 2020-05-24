@@ -82,4 +82,5 @@ int main(int, char**) {
   cons = list("define", "x", list("cons", 0_i, 1_i));
   ev(cons);
   ev(make_symbol("x"));
+  ev(list("id", 42_i));
 }
