@@ -4,7 +4,7 @@ SRCS := main.cpp value.cpp prelude.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 
-CXXFLAGS := -Wall -Wextra
+CXXFLAGS := -Wall -Wextra -std=c++17
 -include $(DEPS)
 
 build: $(TARGET)

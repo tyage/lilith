@@ -21,6 +21,8 @@ int main(int, char**) {
   std::cout << show(cons) << std::endl;
   cons = make_cons(to_Value(1), to_Value(2));
   std::cout << show(cons) << std::endl;
+  cons = list(1_i, 2_i, 42_i);
+  std::cout << show(cons) << std::endl;
 
   auto env = initial_env();
   Value res;
@@ -36,4 +38,48 @@ int main(int, char**) {
   std::tie(res, env) = eval(make_symbol("nil"), env);
   std::cout << "##env: "<< show(env) << std::endl;
   std::cout << "val: "<< show(res) << std::endl;
+
+  cons = make_symbol("cons");
+  auto ev = [&res, &env] (Value v) {
+    std::cout << "---------------------------------" << std::endl;
+    std::cout << "# => " << show(v) << std::endl;
+    try {
+      std::tie(res, env) = eval(v, env);
+      std::cout << "##env: "<< show(env) << std::endl;
+      std::cout << "val: "<< show(res) << std::endl;
+    } catch (char const* msg) {
+      std::cout << "### catch!!" << std::endl;
+      std::cout << msg << std::endl;
+    }
+  };
+  ev(cons);
+
+  Value const cons12 = list("cons", 1_i, 2_i);
+  ev(cons12);
+
+  cons = list("car", cons12);
+  ev(cons);
+  cons = list("cdr", cons12);
+  ev(cons);
+  cons = list("eq", 1_i, 2_i);
+  ev(cons);
+  cons = list("eq", 0_i, 0_i);
+  ev(cons);
+  cons = list("atom", "nil");
+  ev(cons);
+  cons = list("atom", 0_i);
+  ev(cons);
+  cons = list("atom", cons12);
+  ev(cons);
+  cons = list("if", "nil", 0_i, 1_i);
+  ev(cons);
+  cons = list("if", "#t", 0_i, 1_i);
+  ev(cons);
+  cons = list("quote", 42_i);
+  ev(cons);
+  cons = list("quote", list("cons", "a", "b"));
+  ev(cons);
+  cons = list("define", "x", list("cons", 0_i, 1_i));
+  ev(cons);
+  ev(make_symbol("x"));
 }
