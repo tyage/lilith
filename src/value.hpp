@@ -29,8 +29,5 @@ bool is_self_eval(Value v);
 bool is_symbol(Value v);
 bool is_variable(Value v);
 bool is_atom_bool(Value v);
-bool is_lambda_bool(Value v);
-Value params(Value v);
-Value body(Value v);
-Value lambda_env(Value v);
 char const* c_str(Value v); // only for debug!!!
+std::int64_t to_int(Value v);
