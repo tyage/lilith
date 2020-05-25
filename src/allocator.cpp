@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cstdlib>
 
+// value.cppの中で、Valueの下2bitに情報をつめこんでいるので、allocの返り値は最低でも4byte alignmentはないと壊れる。
+
 enum class AllocatorStrategy {
   NOP,
   PreAllocateNOP,
@@ -21,6 +23,7 @@ size_t roundup(size_t size, size_t round) {
 }
 
 void* PreAlloc_pointer_slice_alloc(size_t size) {
+  // おもらしするポインタずらし。
   size_t const block_size = 1024 * 32 * 1024;
   size_t const alignment_size = 4;
   static void* current_block = nullptr;
