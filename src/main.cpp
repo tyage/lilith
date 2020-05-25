@@ -33,15 +33,12 @@ int main(int argc, char** argv) {
   Value res;
 
   std::tie(res, env) = eval(to_Value(0), env);
-  std::cout << "##env: "<< show(env) << std::endl;
   std::cout << "val: "<< show(res) << std::endl;
 
   std::tie(res, env) = eval(t(), env);
-  std::cout << "##env: "<< show(env) << std::endl;
   std::cout << "val: "<< show(res) << std::endl;
 
   std::tie(res, env) = eval(make_symbol("nil"), env);
-  std::cout << "##env: "<< show(env) << std::endl;
   std::cout << "val: "<< show(res) << std::endl;
 
   cons = make_symbol("cons");
@@ -50,7 +47,6 @@ int main(int argc, char** argv) {
     std::cout << "# => " << show(v) << std::endl;
     try {
       std::tie(res, env) = eval(v, env);
-      std::cout << "##env: "<< show(env) << std::endl;
       std::cout << "val: "<< show(res) << std::endl;
     } catch (char const* msg) {
       std::cout << "### catch!!" << std::endl;
