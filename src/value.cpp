@@ -2,12 +2,14 @@
 #include "prelude.hpp"
 #include "allocator.hpp"
 
-// ポインタが4byteアライメントされてるということを以下仮定。
+// ポインタが16byteアライメントされてるということを以下仮定。
+// https://www.gnu.org/software/libc/manual/html_node/Aligned-Memory-Blocks.html
+// glibcだと保証があるらしい。
 // 下2bitが
 //   00 ポインタ(この時cons cellである)
 //   01 数字(上位bitにsigned int(最上位が1なら負))
 //   10 Symbol(上位bitをアドレスだと思って指した先にnull terminated stringで名前が入っている)
-//   11 undef
+//   11 Symbol(short string opt) 上位7byteにnull terminated(7文字なら無し)で名前が入る。
 
 // nil以外はtruety
 
