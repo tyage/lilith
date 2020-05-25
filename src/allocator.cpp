@@ -1,5 +1,8 @@
 #include "allocator.hpp"
 
+#include <iostream>
+#include <cstdlib>
+
 enum class AllocatorStrategy {
   NOP,
   PreAllocateNOP,
@@ -7,7 +10,6 @@ enum class AllocatorStrategy {
 
 AllocatorStrategy const strategy = AllocatorStrategy::PreAllocateNOP;
 
-#include <cstdlib>
 void* NOP_alloc(size_t size) {
   // 全部おもらし。
   return std::malloc(size);
@@ -19,7 +21,7 @@ size_t roundup(size_t size, size_t round) {
 }
 
 void* PreAlloc_pointer_slice_alloc(size_t size) {
-  size_t const block_size = 1024 * 32;
+  size_t const block_size = 1024 * 32 * 1024;
   size_t const alignment_size = 4;
   static void* current_block = nullptr;
   static size_t current_offset = block_size;
@@ -36,7 +38,10 @@ void* PreAlloc_pointer_slice_alloc(size_t size) {
   return result;
 }
 
+static int alloc_cnt = 0;
+
 void* alloc(size_t size) {
+  ++alloc_cnt;
   switch(strategy) {
   case AllocatorStrategy::NOP:
     return NOP_alloc(size);
@@ -46,4 +51,5 @@ void* alloc(size_t size) {
 }
 
 void collect(Value rootset) {
+  std::cout << alloc_cnt << "allocations!" << std::endl;
 }
