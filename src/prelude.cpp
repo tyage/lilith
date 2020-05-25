@@ -48,7 +48,7 @@ Value define_variable(Value name, Value def, Value env) {
 }
 
 Value define_primitives(Value env) {
-  std::array prims = {"cons", "car", "cdr", "atom", "eq"};
+  std::array prims = {"cons", "car", "cdr", "atom", "eq", "succ", "pred"};
   for(auto e: prims) {
     env = define_variable(make_symbol(e), list("primitive", e), env);
   }
@@ -142,6 +142,13 @@ Value primitive_eq(Value args) {
   Value cdr_ = car(cdr(args));
   return eq(car_, cdr_);
 }
+Value primitive_succ(Value arg, bool plus) {
+  assert(is_integer(arg));
+  if(plus) {
+    return succ(arg);
+  }
+  return pred(arg);
+}
 
 Value apply_primitive(Value name, Value args) {
   if(eq_bool(name, make_symbol("cons"))) return primitive_cons(args);
@@ -149,6 +156,8 @@ Value apply_primitive(Value name, Value args) {
   if(eq_bool(name, make_symbol("cdr"))) return cdr(car(args));
   if(eq_bool(name, make_symbol("eq"))) return primitive_eq(args);
   if(eq_bool(name, make_symbol("atom"))) return atom(car(args));
+  if(eq_bool(name, make_symbol("succ"))) return primitive_succ(car(args), true);
+  if(eq_bool(name, make_symbol("pred"))) return primitive_succ(car(args), false);
   throw "unknown primitive";
 }
 
