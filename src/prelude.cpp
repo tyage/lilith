@@ -9,8 +9,8 @@
 std::tuple<Value, Value> eval_define(Value v, Value env);
 
 Value t() {
-  // 毎回異なる `#t` が産まれて愉快。
-  return make_symbol("#t");
+  static Value t = make_symbol("#t");
+  return t;
 }
 
 Value from_bool(bool b) {
