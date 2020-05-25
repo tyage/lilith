@@ -15,7 +15,7 @@ Value prelude_lisp_defines(Value env) {
   std::array defines = {
     "(define id (lambda (x) x))",
     "(define + (lambda (x y) (if (eq y 0) x (+ (succ x) (pred y)))))",
-    "(define x 42)",
+    "(define * (lambda (x y) (if (eq y 0) 0 (+ x (* x (pred y))))))",
   };
   for(auto v: defines) {
     std::tie(std::ignore, env) = eval_define(to_Lisp(v), env);
