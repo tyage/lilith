@@ -1,5 +1,6 @@
 #include "value.hpp"
 #include "prelude.hpp"
+#include "allocator.hpp"
 
 // ポインタが4byteアライメントされてるということを以下仮定。
 // 下2bitが
@@ -18,14 +19,7 @@
 
 #include <sstream>
 #include <cassert>
-#include <cstdlib>
 #include <cstring>
-
-void* alloc(size_t size) {
-  // あとで置き換える。 GCを書きたくてlispを書きはじめたので……。
-  // 今は全部おもらし。
-  return std::malloc(size);
-}
 
 Value to_Value(void* v) {
   return reinterpret_cast<Value>(v);

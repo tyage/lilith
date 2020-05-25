@@ -1,4 +1,5 @@
 #include "prelude.hpp"
+#include "allocator.hpp"
 
 #include <array>
 #include <cassert>
@@ -365,5 +366,6 @@ Value read(std::istream& is) {
     std::cout << "# => " << show(input) << std::endl;
     std::tie(res, env) = eval(input, env);
     std::cout << show(res) << std::endl;
+    collect();
   }
 }
