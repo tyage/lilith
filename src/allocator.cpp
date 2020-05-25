@@ -19,5 +19,5 @@ void* alloc(size_t size) {
   }
 }
 
-void collect() {
+void collect(Value rootset) {
 }

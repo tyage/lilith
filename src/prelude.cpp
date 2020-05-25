@@ -381,6 +381,6 @@ Value read(std::istream& is) {
     std::cout << "# => " << show(input) << std::endl;
     std::tie(res, env) = eval(input, env);
     std::cout << show(res) << std::endl;
-    collect();
+    collect(env);
   }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstddef>
+#include "value.hpp"
 
+#include <cstddef>
 void* alloc(size_t size);
-void collect();
+void collect(Value rootset);
