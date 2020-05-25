@@ -13,6 +13,8 @@ Value car(Value cons);
 Value cdr(Value cons);
 Value atom(Value v);
 Value eq(Value lhs, Value rhs);
+void set_car(Value cons, Value car);
+void set_cdr(Value cons, Value car);
 
 Value lambda(Value names, Value body, Value env);
 

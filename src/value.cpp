@@ -74,6 +74,11 @@ Value cdr(Value cons) {
   assert(type(cons) == ValueType::Cons);
   return *(to_ptr(cons) + 1);
 }
+void set_car(Value cons, Value car) {
+  assert(type(cons) == ValueType::Cons);
+  *to_ptr(cons) = car;
+}
+void set_cdr(Value cons, Value car);
 
 char const* c_str(Value v) {
   assert(type(v) == ValueType::Symbol);

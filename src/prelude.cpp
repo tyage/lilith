@@ -45,7 +45,8 @@ Value define_variable(Value name, Value def, Value env) {
   Value parent = cdr(env);
   Value pair = make_cons(name, def);
   Value new_assoc = make_cons(pair, assoc); // assocの先頭につっこんでおけば更新もできるし、追加もできる。
-  return make_cons(new_assoc, parent);
+  set_car(env, new_assoc);
+  return env;
 }
 
 Value define_primitives(Value env) {
