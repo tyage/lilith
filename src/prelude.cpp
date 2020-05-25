@@ -290,6 +290,19 @@ bool is_digit(char c) {
   return '0' <= c && c <= '9';
 }
 
+bool is_spaces(char c) {
+  return c == ' ' || c == '\n';
+}
+
+void skip_spaces(std::istream& is) {
+  int peek = is.peek();
+  if(peek == EOF) throw EOF;
+  while(is_spaces(peek)) {
+    is.get();
+    peek = is.peek();
+  }
+}
+
 Value read_number(std::istream& is) {
   int peek;
   std::int64_t res{};
@@ -310,17 +323,16 @@ Value reverse(Value list) {
 
 Value read_list(std::istream& is) {
   is.get(); // '('
+  skip_spaces(is);
   Value l = nil();
   while(is.peek() != ')') {
     Value v = read(is);
     l = make_cons(v, l);
   }
-  is.get(); // ')'
+  skip_spaces(is);
+  char c = is.get(); // ')'
+  assert(c == ')');
   return reverse(l);
-}
-
-bool is_spaces(char c) {
-  return c == ' ' || c == '\n';
 }
 
 bool is_alpha(char c) {
@@ -352,12 +364,9 @@ Value read_identifier(std::istream& is) {
 }
 
 Value read(std::istream& is) {
+  skip_spaces(is);
   int peek = is.peek();
-  while(is_spaces(peek)) {
-    is.get();
-    peek = is.peek();
-  }
-  if(peek == EOF) throw nil();
+  if(peek == EOF) throw EOF;
   if(is_digit(peek)) {
     return read_number(is);
   }
@@ -368,7 +377,8 @@ Value read(std::istream& is) {
     return read_identifier(is);
   }
 
-  throw "a";
+  std::cout << "???? " << peek << std::endl;
+  throw "read fail";
   return nil();
 }
 
