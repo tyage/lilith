@@ -37,15 +37,29 @@ Value unquote(Value v) {
 }
 
 Value expand_env(Value env) {
-  return make_cons(nil(), env);
+  return make_cons(make_symbol("env"), make_cons(nil(), env));
+}
+
+void assert_env(Value env) {
+  assert(to_bool(eq(car(env), make_symbol("env"))));
+}
+
+Value get_assoc(Value env) {
+  assert(to_bool(eq(car(env), make_symbol("env"))));
+  return car(cdr(env));
+}
+Value get_parent(Value env) {
+  assert(to_bool(eq(car(env), make_symbol("env"))));
+  return cdr(cdr(env));
 }
 
 Value define_variable(Value name, Value def, Value env) {
-  Value assoc = car(env);
-  Value parent = cdr(env);
+  assert_env(env);
+  Value assoc = get_assoc(env);
+  Value parent = get_parent(env);
   Value pair = make_cons(name, def);
   Value new_assoc = make_cons(pair, assoc); // assocの先頭につっこんでおけば更新もできるし、追加もできる。
-  set_car(env, new_assoc);
+  set_car(cdr(env), new_assoc);
   return env;
 }
 
@@ -58,7 +72,7 @@ Value define_primitives(Value env) {
 }
 
 Value initial_env() {
-  Value env = make_cons(nil(), nil());
+  Value env = make_cons(make_symbol("env"), make_cons(nil(), nil()));
   env = define_variable(t(), t(), env);
   env = define_variable(make_symbol("nil"), nil(), env);
   env = define_primitives(env);
@@ -82,9 +96,10 @@ Value lookup(Value name, Value list) {
 }
 
 Value find(Value name, Value env) {
+  assert_env(env);
   if(env != nil()) {
-    Value assoc = car(env);
-    Value parent = cdr(env);
+    Value assoc = get_assoc(env);
+    Value parent = get_parent(env);
 
     Value res = lookup(name, assoc);
     if(res != nil()) {

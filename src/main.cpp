@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 
   std::tie(res, env) = eval(to_Value(0), env);
   std::cout << "val: "<< show(res) << std::endl;
+  std::cout << "env: "<< show(env) << std::endl;
 
   std::tie(res, env) = eval(t(), env);
   std::cout << "val: "<< show(res) << std::endl;

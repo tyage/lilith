@@ -12,7 +12,7 @@
 // nil以外はtruety
 
 // envとは？
-//   (assoc . parent)
+//   ("env" . (assoc . parent))
 
 // lambda
 //   (params body . env)
@@ -166,6 +166,9 @@ std::string show(Value v) {
   case ValueType::Cons:
     if(v == nil()) {
       return "()";
+    }
+    if(to_bool(eq(car(v), make_symbol("env")))) {
+      return "#<environment ob>";
     }
     ss << '(' << show(car(v));
     while(type(cdr(v)) == ValueType::Cons) {
