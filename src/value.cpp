@@ -115,8 +115,11 @@ Value lambda(Value names, Value body, Value env) {
   return res | 3;
 }
 
+bool is_integer(Value v) {
+  return type(v) == ValueType::Integer;
+}
 bool is_self_eval(Value v) {
-  return type(v) == ValueType::Integer || v == nil();
+  return is_integer(v) || v == nil();
 }
 bool is_symbol(Value v) {
   return type(v) == ValueType::Symbol;

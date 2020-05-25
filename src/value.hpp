@@ -25,6 +25,7 @@ std::string show(Value v);
 // for impl prelude(あとで隠す)
 Value make_symbol(char const* name);
 bool eq_bool(Value lhs, Value rhs);
+bool is_integer(Value v);
 bool is_self_eval(Value v);
 bool is_symbol(Value v);
 bool is_variable(Value v);
