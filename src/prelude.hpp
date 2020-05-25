@@ -29,3 +29,6 @@ inline Value list(T v, Args&&...args) {
 
 Value read(std::istream&);
 [[noreturn]] void repl(std::istream&);
+
+// for impl show
+std::string show_env(Value env);

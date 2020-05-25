@@ -159,7 +159,10 @@ Value pred(Value v) {
   return to_Value(to_int(v) - 1);
 }
 
-std::string show(Value v) {
+std::string show(Value v, Value ignore) {
+  if(v == ignore && ignore != nil()) {
+    return "(*** ignored ***)";
+  }
   auto const t = type(v);
   std::stringstream ss;
   switch(t) {
@@ -168,20 +171,23 @@ std::string show(Value v) {
       return "()";
     }
     if(to_bool(eq(car(v), make_symbol("env")))) {
-      return "#<environment ob>";
+      return show_env(v);
     }
-    ss << '(' << show(car(v));
+    if(to_bool(eq(car(v), make_symbol("procedure")))) {
+      return "#<lambda>";
+    }
+    ss << '(' << show(car(v), ignore);
     while(type(cdr(v)) == ValueType::Cons) {
       if(cdr(v) == nil()) { break; }
       v = cdr(v);
-      ss << ' ' << show(car(v));
+      ss << ' ' << show(car(v), ignore);
     }
     if(cdr(v) == nil()) {
       // proper list
       ss << ')';
     } else {
       // improper
-      ss << ". " << show(cdr(v)) << ')';
+      ss << ". " << show(cdr(v), ignore) << ')';
     }
     return ss.str();
   case ValueType::Integer:

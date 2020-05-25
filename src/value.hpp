@@ -22,7 +22,7 @@ Value to_Value(std::int64_t);
 inline Value operator""_i(unsigned long long v) { return to_Value(v); }
 Value succ(Value);
 Value pred(Value);
-std::string show(Value v);
+std::string show(Value v, Value ignore = nil());
 
 // for impl prelude(あとで隠す)
 Value make_symbol(char const* name);

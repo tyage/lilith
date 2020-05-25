@@ -3,6 +3,7 @@
 #include "lisp_prelude.hpp"
 
 #include <array>
+#include <sstream>
 #include <cassert>
 
 std::tuple<Value, Value> eval_define(Value v, Value env);
@@ -391,4 +392,17 @@ bool const rethrow(false); // for debug, set true
     }
     collect(env);
   }
+}
+
+std::string show_env(Value env) {
+  assert_env(env);
+  Value assoc = get_assoc(env);
+  Value parent = get_parent(env);
+  std::stringstream ss;
+  ss << "defined: { " << show(assoc, env) << " }";
+  if(parent != nil()) {
+    ss << ", parent: { " << show_env(parent) << " }";
+  }
+
+  return ss.str();
 }
