@@ -199,7 +199,7 @@ std::string show(Value v, Value ignore) {
     if(to_bool(eq(car(v), make_symbol("env")))) {
       return show_env(v);
     }
-    if(to_bool(eq(car(v), make_symbol("procedure")))) {
+    if(to_bool(eq(car(v), make_symbol("proced")))) {
       return "#<lambda>";
     }
     ss << '(' << show(car(v), ignore);
