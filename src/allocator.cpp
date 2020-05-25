@@ -48,6 +48,7 @@ void* alloc(size_t size) {
   case AllocatorStrategy::PreAllocateNOP:
     return PreAlloc_pointer_slice_alloc(size);
   }
+  return nullptr;
 }
 
 Value* alloc_cons() {

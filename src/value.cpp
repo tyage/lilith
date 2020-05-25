@@ -38,7 +38,7 @@ Value make_symbol(char const* name) {
   size_t len = std::strlen(name);
   if(len <= 7) { // short string opt
     Value res{0b11};
-    for(int i{}; i < len; ++i) {
+    for(size_t i{}; i < len; ++i) {
       res |= static_cast<unsigned long long>(name[i]) << (7 * 8 - i * 8);
     }
     return res;
@@ -131,6 +131,7 @@ bool eq_bool(Value lhs, Value rhs) {
   case ValueType::Integer:
     return lhs == rhs;
   case ValueType::Symbol:
+  default:
     return symbol_eq_bool(lhs, rhs);
   }
 }
@@ -218,6 +219,7 @@ std::string show(Value v, Value ignore) {
     ss << to_int(v);
     return ss.str();
   case ValueType::Symbol:
+  default:
     return c_str(v);
   }
 }
