@@ -2,9 +2,9 @@
 #include "prelude.hpp"
 #include "allocator.hpp"
 
-// ポインタが16byteアライメントされてるということを以下仮定。
+// ポインタが4byteアライメントされてるということを以下仮定。
 // https://www.gnu.org/software/libc/manual/html_node/Aligned-Memory-Blocks.html
-// glibcだと保証があるらしい。
+// glibcだと8byte保証があるらしい。
 // 下2bitが
 //   00 ポインタ(この時cons cellである)
 //   01 数字(上位bitにsigned int(最上位が1なら負))
