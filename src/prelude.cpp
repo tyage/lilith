@@ -372,15 +372,23 @@ Value read(std::istream& is) {
   return nil();
 }
 
+bool const rethrow(false); // for debug, set true
+
 [[noreturn]] void repl(std::istream& is) {
   Value env = initial_env();
   Value res;
   while(true) {
-    std::cout << "> ";
-    Value input = read(is);
-    std::cout << "# => " << show(input) << std::endl;
-    std::tie(res, env) = eval(input, env);
-    std::cout << show(res) << std::endl;
+    try{
+      std::cout << "> ";
+      Value input = read(is);
+      std::cout << "# => " << show(input) << std::endl;
+      std::tie(res, env) = eval(input, env);
+      std::cout << show(res) << std::endl;
+    } catch(char const* msg) {
+      std::cout << "*** catch ***" << std::endl;
+      std::cout << msg << std::endl;
+      if(rethrow) throw msg;
+    }
     collect(env);
   }
 }
