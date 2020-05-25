@@ -30,8 +30,6 @@ Value* to_ptr(Value v) {
   return reinterpret_cast<Value*>(v);
 }
 
-size_t const cell_size = sizeof(Value);
-
 Value nil() {
   return 0;
 }
@@ -52,7 +50,7 @@ Value make_symbol(char const* name) {
 }
 
 Value make_cons(Value car, Value cdr) {
-  auto const region = alloc(2 * cell_size);
+  auto const region = alloc_cons();
   *static_cast<Value*>(region) = car;
   *(static_cast<Value*>(region) + 1) = cdr;
   return to_Value(region);

@@ -50,6 +50,10 @@ void* alloc(size_t size) {
   }
 }
 
+Value* alloc_cons() {
+  return static_cast<Value*>(alloc(sizeof(Value) * 2));
+}
+
 void collect(Value rootset) {
   std::cout << alloc_cnt << "allocations!" << std::endl;
 }
