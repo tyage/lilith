@@ -313,7 +313,7 @@ bool is_alpha(char c) {
 }
 
 bool is_identifier_start(char c) {
-  return is_alpha(c) || c == '*' || c == '_' || c == '-' c == '+' || c == '/';
+  return is_alpha(c) || c == '*' || c == '_' || c == '-' || c == '+' || c == '/' || c == '#';
 }
 
 bool is_identifier_char(char c) {
