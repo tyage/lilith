@@ -374,6 +374,7 @@ Value read(std::istream& is) {
 }
 
 bool const rethrow(false); // for debug, set true
+bool const showenv(true);
 
 [[noreturn]] void repl(std::istream& is) {
   Value env = initial_env();
@@ -390,6 +391,7 @@ bool const rethrow(false); // for debug, set true
       std::cout << msg << std::endl;
       if(rethrow) throw msg;
     }
+    if(showenv) std::cout << "*** env:" << show_env(env) << std::endl;
     collect(env);
   }
 }
