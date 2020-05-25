@@ -153,7 +153,7 @@ Value to_Value(std::int64_t v) {
 Value succ(Value v) {
   return to_Value(to_int(v) + 1);
 }
-Value prev(Value v) {
+Value pred(Value v) {
   return to_Value(to_int(v) - 1);
 }
 
