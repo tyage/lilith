@@ -38,6 +38,14 @@ Value nil() {
 
 Value make_symbol(char const* name) {
   size_t len = std::strlen(name);
+  if(len <= 7) { // short string opt
+    Value res{0b11};
+    for(int i{}; i < len; ++i) {
+      res |= static_cast<unsigned long long>(name[i]) << (7 * 8 - i * 8);
+    }
+    return res;
+  }
+
   char* p = static_cast<char*>(alloc(len + 1));
   std::strcpy(p, name);
   return to_Value(p) | 0b10;
@@ -82,9 +90,22 @@ void set_car(Value cons, Value car) {
 }
 void set_cdr(Value cons, Value car);
 
+bool is_long_str(Value v) {
+  assert(type(v) == ValueType::Symbol);
+  return (v & 3) == 0b10;
+}
+
 char const* c_str(Value v) {
   assert(type(v) == ValueType::Symbol);
-  return reinterpret_cast<char const*>(v - 0b10);
+  if(is_long_str(v)) return reinterpret_cast<char const*>(v - 0b10);
+  char* p = static_cast<char*>(alloc(8));
+  p[7] = '\0';
+  for(int i{}; i < 7; ++i) {
+    int offset = 7 * 8 - i * 8;
+    p[i] = ((0xFFLL << offset) & v) >> offset;
+  }
+
+  return p;
 }
 
 bool is_atom_bool(Value v) {
@@ -96,6 +117,9 @@ Value atom(Value v) {
 }
 
 bool symbol_eq_bool(Value lhs, Value rhs) {
+  if(!is_long_str(lhs)) {
+    return lhs == rhs;
+  }
   return std::strcmp(c_str(lhs), c_str(rhs)) == 0;
 }
 
