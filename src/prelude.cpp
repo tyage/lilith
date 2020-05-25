@@ -57,7 +57,6 @@ Value get_parent(Value env) {
 Value define_variable(Value name, Value def, Value env) {
   assert_env(env);
   Value assoc = get_assoc(env);
-  Value parent = get_parent(env);
   Value pair = make_cons(name, def);
   Value new_assoc = make_cons(pair, assoc); // assocの先頭につっこんでおけば更新もできるし、追加もできる。
   set_car(cdr(env), new_assoc);
@@ -67,7 +66,7 @@ Value define_variable(Value name, Value def, Value env) {
 Value define_primitives(Value env) {
   std::array prims = {"cons", "car", "cdr", "atom", "eq", "succ", "pred"};
   for(auto e: prims) {
-    env = define_variable(make_symbol(e), list("primitive", e), env);
+    env = define_variable(make_symbol(e), list("prim", e), env);
   }
   return env;
 }
@@ -134,7 +133,7 @@ Value len(Value list) {
 }
 
 bool is_primitive_bool(Value v) {
-  return is_tagged_list_bool(v, make_symbol("primitive"));
+  return is_tagged_list_bool(v, make_symbol("prim"));
 }
 
 Value primitive_cons(Value args) {
@@ -181,7 +180,7 @@ bool is_lambda_bool(Value v) {
   return is_tagged_list_bool(v, make_symbol("lambda"));
 }
 bool is_procedure_bool(Value v) {
-  return is_tagged_list_bool(v, make_symbol("procedure"));
+  return is_tagged_list_bool(v, make_symbol("proced"));
 }
 
 Value procedure_args(Value f) {
@@ -267,7 +266,7 @@ Value make_procedure(Value lambda, Value env) {
   Value body = cdr(cdr(lambda));
   // (lambda (x) x)
   // (lambda list list)
-  return list("procedure", args, body, env);
+  return list("proced", args, body, env);
 }
 
 std::tuple<Value, Value> eval(Value v, Value env) {
