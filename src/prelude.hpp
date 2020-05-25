@@ -14,6 +14,7 @@ Value initial_env();
 
 // pair of (evaled value, new env)
 std::tuple<Value, Value> eval(Value v, Value env);
+std::tuple<Value, Value> eval_define(Value v, Value env); // internai?
 
 inline Value to_Value_(Value v) { return v; }
 inline Value to_Value_(char const* s) { return make_symbol(s); }

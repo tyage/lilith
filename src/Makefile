@@ -1,6 +1,6 @@
 include ../Makefile.common
 
-SRCS := main.cpp value.cpp prelude.cpp allocator.cpp
+SRCS := main.cpp value.cpp prelude.cpp allocator.cpp lisp_prelude.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 

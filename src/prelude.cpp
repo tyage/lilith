@@ -1,5 +1,6 @@
 #include "prelude.hpp"
 #include "allocator.hpp"
+#include "lisp_prelude.hpp"
 
 #include <array>
 #include <cassert>
@@ -51,17 +52,6 @@ Value define_primitives(Value env) {
   std::array prims = {"cons", "car", "cdr", "atom", "eq", "succ", "pred"};
   for(auto e: prims) {
     env = define_variable(make_symbol(e), list("primitive", e), env);
-  }
-  return env;
-}
-
-Value prelude_lisp_defines(Value env) {
-  std::array defines = {
-    list("define", "ans", 42_i),
-    list("define", "id", list("lambda", list("x"), "x")),
-  };
-  for(auto v: defines) {
-    std::tie(std::ignore, env) = eval_define(v, env);
   }
   return env;
 }
