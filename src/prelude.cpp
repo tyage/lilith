@@ -41,10 +41,6 @@ Value expand_env(Value env) {
   return make_cons(make_symbol("env"), make_cons(nil(), env));
 }
 
-void assert_env(Value env) {
-  assert(to_bool(eq(car(env), make_symbol("env"))));
-}
-
 Value get_assoc(Value env) {
   assert(to_bool(eq(car(env), make_symbol("env"))));
   return car(cdr(env));
@@ -55,7 +51,7 @@ Value get_parent(Value env) {
 }
 
 Value define_variable(Value name, Value def, Value env) {
-  assert_env(env);
+  assert(to_bool(eq(car(env), make_symbol("env"))));
   Value assoc = get_assoc(env);
   Value pair = make_cons(name, def);
   Value new_assoc = make_cons(pair, assoc); // assocの先頭につっこんでおけば更新もできるし、追加もできる。
@@ -96,7 +92,7 @@ Value lookup(Value name, Value list) {
 }
 
 Value find(Value name, Value env) {
-  assert_env(env);
+  assert(to_bool(eq(car(env), make_symbol("env"))));
   if(env != nil()) {
     Value assoc = get_assoc(env);
     Value parent = get_parent(env);
@@ -406,7 +402,7 @@ bool const showenv(true);
 }
 
 std::string show_env(Value env) {
-  assert_env(env);
+  assert(to_bool(eq(car(env), make_symbol("env"))));
   Value assoc = get_assoc(env);
   Value parent = get_parent(env);
   std::stringstream ss;
