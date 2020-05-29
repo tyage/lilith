@@ -34,3 +34,6 @@ bool is_variable(Value v);
 bool is_atom_bool(Value v);
 char const* c_str(Value v); // only for debug!!!
 std::int64_t to_int(Value v);
+
+// for impl allocator
+Value* to_ptr(Value v);
