@@ -8,6 +8,12 @@ int main(int argc, char** argv) {
       repl(std::cin);
       return 0;
     }
+    if(cmd == "str") {
+      unsigned long long val;
+      std::cin >> val;
+      std::cout << show(val) << std::endl;
+      return 0;
+    }
   }
   std::cout << "sizeof(Value) = " << sizeof(Value) << std::endl;
   auto cons = make_cons(to_Value(1), nil());
