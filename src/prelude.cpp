@@ -324,8 +324,8 @@ Value read_list(std::istream& is) {
   while(is.peek() != ')') {
     Value v = read(is);
     l = make_cons(v, l);
+    skip_spaces(is);
   }
-  skip_spaces(is);
   char c = is.get(); // ')'
   assert(c == ')');
   return reverse(l);
