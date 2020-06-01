@@ -7,6 +7,7 @@
 #include <cassert>
 
 std::tuple<Value, Value> eval_define(Value v, Value env);
+Value apply(Value f, Value args);
 
 Value t() {
   static Value t = make_symbol("#t");
@@ -60,7 +61,7 @@ Value define_variable(Value name, Value def, Value env) {
 }
 
 Value define_primitives(Value env) {
-  std::array prims = {"cons", "car", "cdr", "atom", "eq", "succ", "pred"};
+  std::array prims = {"cons", "car", "cdr", "atom", "eq", "succ", "pred", "apply"};
   for(auto e: prims) {
     env = define_variable(make_symbol(e), list("prim", e), env);
   }
@@ -160,6 +161,7 @@ Value apply_primitive(Value name, Value args) {
   if(eq_bool(name, make_symbol("atom"))) return atom(car(args));
   if(eq_bool(name, make_symbol("succ"))) return primitive_succ(car(args), true);
   if(eq_bool(name, make_symbol("pred"))) return primitive_succ(car(args), false);
+  if(eq_bool(name, make_symbol("apply"))) return apply(car(args), cdr(args));
   throw "unknown primitive";
 }
 
