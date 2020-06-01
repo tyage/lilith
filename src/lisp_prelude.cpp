@@ -15,7 +15,7 @@ Value prelude_lisp_defines(Value env) {
   std::array defines = {
     "(define id (lambda (x) x))",
     "(define + (lambda (x y) (if (eq y 0) x (+ (succ x) (pred y)))))",
-    "(define * (lambda (x y) (if (eq y 0) 0 (+ x (* x (pred y))))))",
+    "(define * (lambda (x y) (if (eq y 0) 0 (+ (* x (pred y)) x))))",
     "(define list (lambda x x))",
     "(define null? (lambda (x) (eq nil x)))",
     "(define not (lambda (x) (if x nil #t)))",
