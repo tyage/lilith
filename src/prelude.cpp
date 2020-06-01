@@ -3,6 +3,7 @@
 #include "lisp_prelude.hpp"
 
 #include <array>
+#include <set>
 #include <sstream>
 #include <cassert>
 
@@ -338,8 +339,15 @@ bool is_alpha(char c) {
       || ('A' <= c && c <= 'Z');
 }
 
+template<class T>
+bool contains(std::set<T> const& s, T const& v) {
+  // std::set::contains since C++20
+  return s.find(v) != end(s);
+}
+
 bool is_identifier_start(char c) {
-  return is_alpha(c) || c == '*' || c == '_' || c == '-' || c == '+' || c == '/' || c == '#';
+  std::set const s = {'*', '_', '-', '+', '/', '#', '?'};
+  return is_alpha(c) || contains(s, c);
 }
 
 bool is_identifier_char(char c) {
