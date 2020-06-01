@@ -14,7 +14,7 @@ enum class AllocatorStrategy {
   MarkSweep,
 };
 
-AllocatorStrategy const strategy = AllocatorStrategy::MarkSweep;
+AllocatorStrategy const strategy = AllocatorStrategy::NOP;
 
 void* NOP_alloc(size_t size) {
   // 全部おもらし。
@@ -63,12 +63,9 @@ class MarkSweepAllocator {
     unsigned char header[header_size];
     Value cell[2];
 
-    unsigned char static const alive = 0xfe;
+    unsigned char static const alive = 0x1;
     unsigned char static const dead = 0;
-    unsigned char static const marked = 1;
-    Value* value() { return cell; }
-    void mark() { header[0] = marked; }
-    bool is_marked() { return header[0] == marked; }
+    unsigned char static const marked = 0xff;
   };
   size_t static const base = sizeof(Object);
  // size_t static const in_block = 1024 * 1024;
@@ -79,13 +76,13 @@ class MarkSweepAllocator {
     size_t offset;
     Block() {
       void* p = std::malloc(block_size);
-      std::memset(p, 0xCC, block_size);
+      std::memset(p, 0, block_size);
       area = static_cast<Object*>(p);
       offset = 0;
     }
     Object* alloc() {
       for(; offset < in_block; ++offset){
-        Object* obj = &area[offset];
+        Object* obj = area + offset;
         if(get(obj) != Object::alive) {
           set(Object::alive, obj);
           return obj;
@@ -103,19 +100,24 @@ class MarkSweepAllocator {
       std::cout << "----------" << std::endl;
     }
     void sweep() {
-      // show_map();
+      show_map();
       int cnt{};
       for(size_t i{}; i < in_block; ++i) {
-        Object* obj = &area[i];
+        Object* obj = area + i;
         if(get(obj) == Object::marked) {
           set(Object::alive, obj);
         } else {
           ++cnt;
+          std::cout << (int)get(obj) << std::endl;
           set(Object::dead, obj);
+          std::cout << "sweeping " << show(*obj->cell) << std::endl;
+          *(obj->cell) = make_symbol("dead!");
+          *(obj->cell+1) = make_symbol("beef!");
         }
       }
-      // offset = 0;
+      offset = 0;
       std::cout << cnt << " objects destroied" << std::endl;
+      show_map();
     }
     size_t alive_cnt() {
       int cnt{};
@@ -140,20 +142,26 @@ public:
       std::cout << b.alive_cnt() << std::endl;
     }
     blocks.emplace_back();
-    return blocks.back().alloc()->value();
+    return blocks.back().alloc()->cell;
   }
   void mark_cons(Value v) {
-    if(!is_cons(v)) return;
-    Object* obj = reinterpret_cast<Object*>(reinterpret_cast<char*>(to_ptr(v)) - header_size);
-    if(obj->is_marked()) return; // 他のpathで既にmarkされてる。
+    std::cout << "marking: " << show(v) << std::endl;
+    if(!is_cons(v)) {
+      std::cout << "not cons skip!" << std::endl;
+      return;
+    }
+    if(get(to_ptr(v), -4) == Object::marked) {
+      std::cout << "already marked!" << std::endl;
+      return; // 他のpathで既にmarkされてる。
+    }
     set(Object::marked, to_ptr(v), -4);
+    std::cout << "mark!" << std::endl;
 
     mark_cons(car(v));
     mark_cons(cdr(v));
   }
   void sweep() {
-    for(size_t i{}; i < blocks.size(); ++i) {
-      auto& b = blocks[i];
+    for(auto& b: blocks) {
       b.sweep();
       std::cout << "####### " << b.alive_cnt() << " objects alive" << std::endl;
     }
@@ -162,6 +170,12 @@ public:
   void collect(Value rootset) {
     mark_cons(rootset);
     sweep();
+    std::cout << "!!!!!!";
+    show_env(rootset);
+    std::cout << std::endl;
+    show(rootset);
+    std::cout << (rootset) << "!!!!!!";
+    std::cout << std::endl;
   }
 } markSweepAllocator;
 
