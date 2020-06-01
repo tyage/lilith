@@ -16,6 +16,10 @@ Value prelude_lisp_defines(Value env) {
     "(define id (lambda (x) x))",
     "(define + (lambda (x y) (if (eq y 0) x (+ (succ x) (pred y)))))",
     "(define * (lambda (x y) (if (eq y 0) 0 (+ x (* x (pred y))))))",
+    "(define list (lambda x x))",
+    "(define null? (lambda (x) (eq nil x)))",
+    "(define not (lambda (x) (if x nil #t)))",
+    "(define length (lambda (x) (if x (succ (length (cdr x))) 0)))",
   };
   for(auto v: defines) {
     std::tie(std::ignore, env) = eval_define(to_Lisp(v), env);
