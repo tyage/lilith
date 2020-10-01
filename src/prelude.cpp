@@ -346,7 +346,7 @@ bool contains(std::set<T> const& s, T const& v) {
 }
 
 bool is_identifier_start(char c) {
-  std::set const s = {'*', '_', '-', '+', '/', '#', '?'};
+  std::set const s = {'*', '_', '-', '+', '/', '#', '?', '<', '>'};
   return is_alpha(c) || contains(s, c);
 }
 
