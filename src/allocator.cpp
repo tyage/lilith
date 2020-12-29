@@ -12,9 +12,10 @@ enum class AllocatorStrategy {
   NOP,
   PreAllocateNOP,
   MarkSweep,
+  MoveCompact,
 };
 
-AllocatorStrategy const strategy = AllocatorStrategy::NOP;
+AllocatorStrategy const strategy = AllocatorStrategy::MoveCompact;
 
 void* NOP_alloc(size_t size) {
   // 全部おもらし。
@@ -179,6 +180,30 @@ public:
   }
 } markSweepAllocator;
 
+class MoveCompactAllocator {
+  std::vector<bool> bitmap;
+  size_t const par_page = 1024; // page にいくつのobjectがあるか
+  size_t const page_size = par_page * sizeof(Value);
+  size_t offset; // page先頭からのオフセット
+  std::vector<Value*> pages; // array of page
+public:
+  MoveCompactAllocator() : bitmap{}, offset{par_page}, pages{} {}
+  Value* alloc_cons() {
+    if (offset > par_page - 1) { // このpageにはもう入らない。
+      Value* p = static_cast<Value*>(std::malloc(page_size));
+      if (p == nullptr) {
+        throw std::bad_alloc();
+      }
+      pages.push_back(p);
+      offset = 0;
+    }
+    auto addr = pages.back() + offset;
+    offset += 2;
+    return addr;
+  }
+  void collect(Value rootset) {}
+} moveCompactAllocator;
+
 static int alloc_cnt = 0;
 
 void* alloc(size_t size) {
@@ -196,6 +221,8 @@ Value* alloc_cons() {
   switch(strategy) {
   case AllocatorStrategy::MarkSweep:
     return markSweepAllocator.alloc_cons();
+  case AllocatorStrategy::MoveCompact:
+    return moveCompactAllocator.alloc_cons();
   default:
     size_t const cell_size = sizeof(Value) * 2;
     return static_cast<Value*>(alloc(cell_size));
@@ -207,6 +234,9 @@ void collect(Value rootset) {
   switch(strategy) {
   case AllocatorStrategy::MarkSweep:
     markSweepAllocator.collect(rootset);
+    return;
+  case AllocatorStrategy::MoveCompact:
+    moveCompactAllocator.collect(rootset);
     return;
   default:
     ; // nop

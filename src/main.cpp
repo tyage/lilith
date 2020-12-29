@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   std::cout << "sizeof(Value) = " << sizeof(Value) << std::endl;
   auto cons = make_cons(to_Value(1), nil());
   std::cout << cons << std::endl;
-  std::cout << car(cons) << ','<< cdr(cons) << std::endl;
+  std::cout << car(cons) << ", " << cdr(cons) << std::endl;
   std::cout << show(cons) << std::endl;
   cons = make_cons(to_Value(2), cons);
   std::cout << show(cons) << std::endl;
