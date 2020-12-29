@@ -181,16 +181,19 @@ public:
 } markSweepAllocator;
 
 class MoveCompactAllocator {
+  struct ConsCell {
+    Value cell[2];
+  };
   std::vector<bool> bitmap;
   size_t const par_page = 1024; // page にいくつのobjectがあるか
-  size_t const page_size = par_page * sizeof(Value);
+  size_t const page_size = par_page * sizeof(ConsCell);
   size_t offset; // page先頭からのオフセット
-  std::vector<Value*> pages; // array of page
+  std::vector<ConsCell*> pages; // array of page
 public:
   MoveCompactAllocator() : bitmap{}, offset{par_page}, pages{} {}
   Value* alloc_cons() {
     if (offset > par_page - 1) { // このpageにはもう入らない。
-      Value* p = static_cast<Value*>(std::malloc(page_size));
+      ConsCell* p = static_cast<ConsCell*>(std::malloc(page_size));
       if (p == nullptr) {
         throw std::bad_alloc();
       }
@@ -198,8 +201,8 @@ public:
       offset = 0;
     }
     auto addr = pages.back() + offset;
-    offset += 2;
-    return addr;
+    ++offset;
+    return addr->cell;
   }
   void collect(Value rootset) {}
 } moveCompactAllocator;
