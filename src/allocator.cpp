@@ -283,7 +283,7 @@ public:
         if (base > scan) { // 境界？
           // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
           std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-          assert(voffset <= par_page);
+          assert(voffset <= par_page * 2);
           e->cell[j] = static_cast<Value>(*(reinterpret_cast<std::uintptr_t*>(pages[vpage] + voffset)));
         }
       }
