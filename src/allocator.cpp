@@ -1,10 +1,18 @@
 #include "allocator.hpp"
 #include "prelude.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+
+#ifdef DEBUG
+#define DEBUG_SHOW 1
+#else
+#define DEBUG_SHOW 0
+#endif
+#define DEBUGMSG if(DEBUG_SHOW)
 
 // value.cppの中で、Valueの下2bitに情報をつめこんでいるので、allocの返り値は最低でも4byte alignmentはないと壊れる。
 
@@ -185,7 +193,7 @@ class MoveCompactAllocator {
     Value cell[2];
   };
   std::vector<bool> bitmap;
-  size_t const par_page = 1024; // page にいくつのobjectがあるか
+  size_t const par_page = 256; // 1024; // page にいくつのobjectがあるか
   size_t const page_size = par_page * sizeof(ConsCell);
   size_t offset; // page先頭からのオフセット
   std::vector<ConsCell*> pages; // array of page
@@ -204,7 +212,104 @@ public:
     ++offset;
     return addr->cell;
   }
-  void collect(Value rootset) {}
+  size_t addr2page(Value* v) {
+    for(size_t i{}; i < pages.size(); ++i) {
+      auto e = pages[i]->cell;
+      if (e <= v && v < e + par_page * sizeof(ConsCell)) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
+        // O(n)かかってヤバそうなら考えましょう。
+        // pageの増減時にしか変わらないのでなんとかできそう。
+        return i;
+      }
+    }
+  }
+  void mark_cons(Value v) {
+    DEBUGMSG std::cout << "marking: " << show(v) << std::endl;
+    if(!is_cons(v)) {
+      DEBUGMSG std::cout << "not cons skip! " << std::endl;
+      return;
+    }
+    // consであれば、いずれかのiについて `pages[i]` 以上 `pages[i] + par_page * sizeof(Value)` 未満に入ってることがあるので、どのpageに属しているかがわかる。
+    Value* vp = to_ptr(v);
+    auto vpage = addr2page(vp);
+    size_t voffset = vp - pages[vpage]->cell;
+    auto base = vpage * par_page + voffset;
+    if (bitmap[base]) {
+      DEBUGMSG std::cout << "already marked!" << std::endl;
+      return;
+    }
+    bitmap[base] = true;
+
+    mark_cons(car(v));
+    mark_cons(cdr(v));
+  }
+  void compact() {
+    size_t free = 0;
+    size_t scan = pages.size() * par_page - 1;
+    while(free != scan) {
+      if (free > scan) break; // このへんも境界怪しい。
+      while(bitmap[free]) {
+        ++free;
+      }
+      while(!bitmap[scan]) --scan;
+      // https://gyazo.com/d778d19b52397d0a7930a01ebba11695
+      auto to = pages[free / par_page] + free % par_page;
+      auto from = pages[scan / par_page] + scan % par_page;
+      // DEBUGMSG std::cout << "to content is " << show(to->cell[0]) << std::endl;
+      DEBUGMSG std::cout << "from content is " << show(from->cell[0]) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
+      if (nil() == from->cell[0]) {
+        DEBUGMSG std::cout << "from cdr is " << show(from->cell[1]) << "(is nil?: " << (nil() == from->cell[1]) << ")" << std::endl;
+      }
+
+      to->cell[0] = from->cell[0];
+      to->cell[1] = from->cell[1];
+     // *reinterpret_cast<std::uintptr_t*>(from) = reinterpret_cast<std::uintptr_t>(static_cast<void*>(to));
+      // 引っ越し先のアドレスを元の住所に書いておく。1cellで2Value分の領域があり、Valueはstd::uintptr_tなので必ず収まる。
+      // scanより後ろで、bitが立っているところは引越しした。
+      ++free;
+      --scan;
+    }
+
+    for(size_t i{}; i < scan; ++i) {
+      auto e = pages[i / par_page] + i % par_page;
+      for(size_t j{}; j < 2; ++j) {
+        auto v = e->cell[j];
+        if (!is_cons(v)) continue;
+        Value* vp = to_ptr(v);
+        auto vpage = addr2page(vp);
+        size_t voffset = vp - pages[vpage]->cell;
+        auto base = vpage * par_page + voffset;
+        if (base > scan) { // 境界？
+          // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
+          e->cell[j] = static_cast<Value>(*(reinterpret_cast<std::uintptr_t*>(pages[vpage] + voffset)));
+        }
+      }
+    }
+  }
+  void show_bitmap() {
+    for(auto e: bitmap) {
+      std::cout << (e ? '.' : ' ');
+    }
+    std::cout << "| kokomade" << std::endl;
+    for(size_t i{}; i < bitmap.size(); ++i) {
+      auto base = pages[i / par_page] + i % par_page;
+      auto head = base->cell[0];
+      auto tail = base->cell[1];
+      std::cout << "addr " << i << " mark: " << bitmap[i] << " content: " << show(head) << " (raw: " << static_cast<unsigned int>(head) << ", " << static_cast<unsigned int>(tail) << ")" << std::endl;
+    }
+  }
+  void collect(Value rootset) {
+    bitmap = std::vector<bool>(pages.size() * par_page);
+    mark_cons(rootset);
+    DEBUGMSG std::cout << "marked bit cnt is " << std::count(begin(bitmap), end(bitmap), true) << std::endl;
+    show_bitmap();
+    compact();
+    DEBUGMSG std::cout << "!!!!!!";
+    show_env(rootset);
+    DEBUGMSG std::cout << std::endl;
+    show(rootset);
+    DEBUGMSG std::cout << (rootset) << "!!!!!!";
+    DEBUGMSG std::cout << std::endl;
+  }
 } moveCompactAllocator;
 
 static int alloc_cnt = 0;
