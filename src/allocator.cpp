@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
 
 #ifdef DEBUG
 #define DEBUG_SHOW 1
@@ -216,7 +217,8 @@ public:
   size_t addr2page(Value* v) {
     for(size_t i{}; i < pages.size(); ++i) {
       auto e = pages[i]->cell;
-      if (e <= v && v < e + par_page * sizeof(ConsCell)) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
+      std::cout << "v: " << v << " e: " << e << " emax: " << (e + par_page * 2) << " emax-v: " << (e + par_page * 2) - v << std::endl;
+      if (e <= v && v < e + par_page * 2) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
         // O(n)かかってヤバそうなら考えましょう。
         // pageの増減時にしか変わらないのでなんとかできそう。
         return i;
@@ -265,6 +267,7 @@ public:
       ++free;
       --scan;
     }
+    std::cout << "scan is " << std::dec << scan << std::endl;
 
     for(size_t i{}; i < scan; ++i) {
       auto e = pages[i / par_page] + i % par_page;
@@ -274,9 +277,13 @@ public:
         Value* vp = to_ptr(v);
         auto vpage = addr2page(vp);
         size_t voffset = vp - pages[vpage]->cell;
+        // assert(voffset <= par_page);
+        std::cout << "vp: " << vp << " vpage: " << vpage << " v: " << std::hex << v << std::dec << std::endl;
         auto base = vpage * par_page + voffset;
         if (base > scan) { // 境界？
           // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
+          std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
+          assert(voffset <= par_page);
           e->cell[j] = static_cast<Value>(*(reinterpret_cast<std::uintptr_t*>(pages[vpage] + voffset)));
         }
       }
@@ -301,7 +308,7 @@ public:
     DEBUGMSG std::cout << "marked bit cnt is " << std::count(begin(bitmap), end(bitmap), true) << std::endl;
     show_bitmap();
     compact();
-    show_bitmap();
+   // show_bitmap();
     DEBUGMSG std::cout << "!!!!!!";
     show_env(rootset);
     DEBUGMSG std::cout << std::endl;
