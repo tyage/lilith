@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <cstring>
 #include <cstdlib>
@@ -223,7 +224,7 @@ public:
     }
   }
   void mark_cons(Value v) {
-    DEBUGMSG std::cout << "marking: " << show(v) << std::endl;
+    DEBUGMSG std::cout << "marking: " << show(v) << " addr: " << to_ptr(v) << std::endl;
     if(!is_cons(v)) {
       DEBUGMSG std::cout << "not cons skip! " << std::endl;
       return;
@@ -255,14 +256,10 @@ public:
       auto to = pages[free / par_page] + free % par_page;
       auto from = pages[scan / par_page] + scan % par_page;
       // DEBUGMSG std::cout << "to content is " << show(to->cell[0]) << std::endl;
-      DEBUGMSG std::cout << "from content is " << show(from->cell[0]) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
-      if (nil() == from->cell[0]) {
-        DEBUGMSG std::cout << "from cdr is " << show(from->cell[1]) << "(is nil?: " << (nil() == from->cell[1]) << ")" << std::endl;
-      }
-
+//      DEBUGMSG std::cout << "from content is " << show(to_Value(static_cast<void*>(to), nullptr)) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
       to->cell[0] = from->cell[0];
       to->cell[1] = from->cell[1];
-     // *reinterpret_cast<std::uintptr_t*>(from) = reinterpret_cast<std::uintptr_t>(static_cast<void*>(to));
+      *reinterpret_cast<std::uintptr_t*>(from) = reinterpret_cast<std::uintptr_t>(static_cast<void*>(to));
       // 引っ越し先のアドレスを元の住所に書いておく。1cellで2Value分の領域があり、Valueはstd::uintptr_tなので必ず収まる。
       // scanより後ろで、bitが立っているところは引越しした。
       ++free;
@@ -294,7 +291,8 @@ public:
       auto base = pages[i / par_page] + i % par_page;
       auto head = base->cell[0];
       auto tail = base->cell[1];
-      std::cout << "addr " << i << " mark: " << bitmap[i] << " content: " << show(head) << " (raw: " << static_cast<unsigned int>(head) << ", " << static_cast<unsigned int>(tail) << ")" << std::endl;
+      std::cout << "addr index: " << std::dec << i << "(raw: " << base << ") mark: " << bitmap[i] << std::hex << " content: " << show(to_Value(base, nullptr))
+      << " (raw: " << static_cast<unsigned int>(head) << ", " << static_cast<unsigned int>(tail) << ")" << std::endl;
     }
   }
   void collect(Value rootset) {
@@ -303,6 +301,7 @@ public:
     DEBUGMSG std::cout << "marked bit cnt is " << std::count(begin(bitmap), end(bitmap), true) << std::endl;
     show_bitmap();
     compact();
+    show_bitmap();
     DEBUGMSG std::cout << "!!!!!!";
     show_env(rootset);
     DEBUGMSG std::cout << std::endl;

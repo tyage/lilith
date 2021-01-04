@@ -26,9 +26,13 @@
 Value to_Value(void* v) {
   return reinterpret_cast<Value>(v);
 }
+Value to_Value(void* v, std::nullptr_t) {
+  return reinterpret_cast<Value>(v);
+}
 Value* to_ptr(Value v) {
   return reinterpret_cast<Value*>(v);
 }
+
 
 Value nil() {
   return 0;

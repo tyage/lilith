@@ -18,6 +18,7 @@ void set_cdr(Value cons, Value car);
 
 Value lambda(Value names, Value body, Value env);
 
+Value to_Value(void*, std::nullptr_t); // 第二引数は `to_Value(0)` でポインタバージョンが曖昧にならないように不要な引数を渡すようにする。
 Value to_Value(std::int64_t);
 inline Value operator""_i(unsigned long long v) { return to_Value(v); }
 Value succ(Value);
