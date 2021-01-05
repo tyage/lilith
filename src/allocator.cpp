@@ -235,12 +235,16 @@ public:
     Value* vp = to_ptr(v);
     auto vpage = addr2page(vp);
     size_t voffset = vp - pages[vpage]->cell;
+    assert(voffset <= par_page * 2);
+    assert(voffset % 2 == 0);
+    voffset /= 2;
     auto base = vpage * par_page + voffset;
     if (bitmap[base]) {
       DEBUGMSG std::cout << "already marked!" << std::endl;
       return;
     }
     bitmap[base] = true;
+    std::cout << "marked at: " << base << " vpage: " << vpage << " voffset: " << voffset << " vp: " << vp << std::endl;
 
     mark_cons(car(v));
     mark_cons(cdr(v));
@@ -257,7 +261,8 @@ public:
       // https://gyazo.com/d778d19b52397d0a7930a01ebba11695
       auto to = pages[free / par_page] + free % par_page;
       auto from = pages[scan / par_page] + scan % par_page;
-      // DEBUGMSG std::cout << "to content is " << show(to->cell[0]) << std::endl;
+      std::cout << "to: " << to << " from: " << from << " free: " << std::dec << free << " scan: " << scan << std::endl;
+      DEBUGMSG std::cout << "to content is " << show(to_Value(static_cast<void*>(to), nullptr)) << std::endl;
 //      DEBUGMSG std::cout << "from content is " << show(to_Value(static_cast<void*>(to), nullptr)) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
       to->cell[0] = from->cell[0];
       to->cell[1] = from->cell[1];
