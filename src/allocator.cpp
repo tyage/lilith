@@ -247,7 +247,7 @@ public:
     mark_cons(car(v));
     mark_cons(cdr(v));
   }
-  void compact() {
+  Value compact(Value root) {
     size_t free = 0;
     size_t scan = pages.size() * par_page - 1;
     while(free != scan) {
@@ -291,6 +291,21 @@ public:
         }
       }
     }
+
+    // rootも引越ししてるかもしれないので、新たなrootを返す。
+        ConsCell* vp = to_ptr(root);
+        auto vpage = addr2page(vp);
+        assert(vpage < pages.size());
+        size_t voffset = vp - pages[vpage];
+        assert(voffset <= par_page);
+        std::cout << "rvp: " << vp << " rvpage: " << vpage << " rv: " << std::hex << root << std::dec << std::endl;
+        auto base = vpage * par_page + voffset;
+        if (base > scan) { // 境界？
+          // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
+          std::cout << "moved root found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
+          return to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
+        }
+        return root;
   }
   void show_bitmap() {
     for(auto e: bitmap) {
@@ -305,19 +320,18 @@ public:
       << " (raw: " << head << ", " << tail << ")" << std::endl;
     }
   }
-  void collect(Value rootset) {
+  Value collect(Value root) {
     bitmap = std::vector<bool>(pages.size() * par_page);
-    mark_cons(rootset);
+    mark_cons(root);
     DEBUGMSG std::cout << "marked bit cnt is " << std::count(begin(bitmap), end(bitmap), true) << std::endl;
     show_bitmap();
-    compact();
+    Value new_root = compact(root);
    // show_bitmap();
     DEBUGMSG std::cout << "!!!!!!";
-    show_env(rootset);
+    show_env(new_root);
     DEBUGMSG std::cout << std::endl;
-    show(rootset);
-    DEBUGMSG std::cout << (rootset) << "!!!!!!";
-    DEBUGMSG std::cout << std::endl;
+    show(new_root);
+    DEBUGMSG std::cout << "old root: " << root << " new root: " <<  new_root << std::endl;
   }
 } moveCompactAllocator;
 
@@ -346,16 +360,15 @@ ConsCell* alloc_cons() {
   }
 }
 
-void collect(Value rootset) {
+Value collect(Value rootset) {
   std::cout << alloc_cnt << " cons total allocations!" << std::endl;
   switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
     markSweepAllocator.collect(rootset);
     return; */
   case AllocatorStrategy::MoveCompact:
-    moveCompactAllocator.collect(rootset);
-    return;
+    return moveCompactAllocator.collect(rootset);
   default:
-    ; // nop
+    return nil(); // nop
   }
 }

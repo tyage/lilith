@@ -414,6 +414,7 @@ bool const showenv(true);
 std::string show_env(Value env) {
   if (!to_bool(eq(car(env), make_symbol("env")))) {
     std::cout << "!!!!" << std::dec << car(env) << ' ' << std::hex << car(env) << std::endl;
+    std::cout << "env itself is : " << env << std::endl;
     std::cout << show(car(env)) << std::endl;
   }
   assert(to_bool(eq(car(env), make_symbol("env"))));
