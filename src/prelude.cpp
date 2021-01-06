@@ -407,7 +407,7 @@ bool const showenv(true);
       if(rethrow) throw msg;
     }
     if(showenv) std::cout << "*** env:" << show_env(env) << std::endl;
-    collect(env);
+    env = collect(env);
   }
 }
 

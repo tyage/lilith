@@ -332,6 +332,7 @@ public:
     DEBUGMSG std::cout << std::endl;
     show(new_root);
     DEBUGMSG std::cout << "old root: " << root << " new root: " <<  new_root << std::endl;
+    return new_root;
   }
 } moveCompactAllocator;
 
