@@ -336,7 +336,7 @@ void* alloc(size_t size) {
   }
 }
 
-Value* alloc_cons() {
+ConsCell* alloc_cons() {
   ++alloc_cnt;
   switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
@@ -345,7 +345,7 @@ Value* alloc_cons() {
     return moveCompactAllocator.alloc_cons(); */
   default:
     size_t const cell_size = sizeof(Value) * 2;
-    return static_cast<Value*>(alloc(cell_size));
+    return static_cast<ConsCell*>(alloc(cell_size));
   }
 }
 

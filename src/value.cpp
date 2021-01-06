@@ -55,8 +55,8 @@ Value make_symbol(char const* name) {
 
 Value make_cons(Value car, Value cdr) {
   auto const region = alloc_cons();
-  *region = car;
-  *(region + 1) = cdr;
+  region->cell[0] = car;
+  region->cell[1] = cdr;
   return to_Value(region);
 }
 
