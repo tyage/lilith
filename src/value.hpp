@@ -5,6 +5,7 @@
 #include <cstdint>
 
 using Value = std::uintptr_t;
+struct ConsCell { Value cell[2]; };
 
 Value nil();
 
@@ -37,4 +38,4 @@ char const* c_str(Value v); // only for debug!!!
 std::int64_t to_int(Value v);
 
 // for impl allocator
-Value* to_ptr(Value v);
+ConsCell* to_ptr(Value v);

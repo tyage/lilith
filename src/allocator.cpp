@@ -25,7 +25,7 @@ enum class AllocatorStrategy {
   MoveCompact,
 };
 
-AllocatorStrategy const strategy = AllocatorStrategy::MoveCompact;
+AllocatorStrategy const strategy = AllocatorStrategy::NOP;
 
 void* NOP_alloc(size_t size) {
   // 全部おもらし。
@@ -68,6 +68,7 @@ void* PreAlloc_pointer_slice_alloc(size_t size) {
   return result;
 }
 
+/*
 class MarkSweepAllocator {
   size_t static const header_size = 4; // 4も管理用領域に必要無いけど、4-align(mallocは16-alignという仮定)。
   struct Object {
@@ -189,11 +190,10 @@ public:
     std::cout << std::endl;
   }
 } markSweepAllocator;
+*/
 
+/*
 class MoveCompactAllocator {
-  struct ConsCell {
-    Value cell[2];
-  };
   std::vector<bool> bitmap;
   size_t const par_page = 256; // 1024; // page にいくつのobjectがあるか
   size_t const page_size = par_page * sizeof(ConsCell);
@@ -322,6 +322,7 @@ public:
     DEBUGMSG std::cout << std::endl;
   }
 } moveCompactAllocator;
+*/
 
 static int alloc_cnt = 0;
 
@@ -337,11 +338,11 @@ void* alloc(size_t size) {
 
 Value* alloc_cons() {
   ++alloc_cnt;
-  switch(strategy) {
+  switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
     return markSweepAllocator.alloc_cons();
   case AllocatorStrategy::MoveCompact:
-    return moveCompactAllocator.alloc_cons();
+    return moveCompactAllocator.alloc_cons(); */
   default:
     size_t const cell_size = sizeof(Value) * 2;
     return static_cast<Value*>(alloc(cell_size));
@@ -350,13 +351,13 @@ Value* alloc_cons() {
 
 void collect(Value rootset) {
   std::cout << alloc_cnt << " cons total allocations!" << std::endl;
-  switch(strategy) {
+  switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
     markSweepAllocator.collect(rootset);
     return;
   case AllocatorStrategy::MoveCompact:
     moveCompactAllocator.collect(rootset);
-    return;
+    return; */
   default:
     ; // nop
   }

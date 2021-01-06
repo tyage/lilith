@@ -29,8 +29,8 @@ Value to_Value(void* v) {
 Value to_Value(void* v, std::nullptr_t) {
   return reinterpret_cast<Value>(v);
 }
-Value* to_ptr(Value v) {
-  return reinterpret_cast<Value*>(v);
+ConsCell* to_ptr(Value v) {
+  return reinterpret_cast<ConsCell*>(v);
 }
 
 
@@ -79,16 +79,19 @@ ValueType type(Value v) {
 }
 
 Value car(Value cons) {
+  if (type(cons) != ValueType::Cons) {
+    std::cout << "wrong cons!!!! " << cons << std::endl;
+  }
   assert(type(cons) == ValueType::Cons);
-  return *to_ptr(cons);
+  return to_ptr(cons)->cell[0];
 }
 Value cdr(Value cons) {
   assert(type(cons) == ValueType::Cons);
-  return *(to_ptr(cons) + 1);
+  return to_ptr(cons)->cell[1];
 }
 void set_car(Value cons, Value car) {
   assert(type(cons) == ValueType::Cons);
-  *to_ptr(cons) = car;
+  to_ptr(cons)->cell[0] = car;
 }
 void set_cdr(Value cons, Value car);
 

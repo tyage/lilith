@@ -412,6 +412,10 @@ bool const showenv(true);
 }
 
 std::string show_env(Value env) {
+  if (!to_bool(eq(car(env), make_symbol("env")))) {
+    std::cout << "!!!!" << car(env) << std::endl;
+    std::cout << show(car(env)) << std::endl;
+  }
   assert(to_bool(eq(car(env), make_symbol("env"))));
   Value assoc = get_assoc(env);
   Value parent = get_parent(env);
