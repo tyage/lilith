@@ -361,14 +361,14 @@ ConsCell* alloc_cons() {
   }
 }
 
-Value collect(Value rootset) {
+Value collect(Value root) {
   std::cout << alloc_cnt << " cons total allocations!" << std::endl;
   switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
-    markSweepAllocator.collect(rootset);
+    markSweepAllocator.collect(root);
     return; */
   case AllocatorStrategy::MoveCompact:
-    return moveCompactAllocator.collect(rootset);
+    return moveCompactAllocator.collect(root);
   default:
     return nil(); // nop
   }
