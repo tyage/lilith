@@ -27,9 +27,9 @@ enum class AllocatorStrategy {
 
 AllocatorStrategy const strategy = AllocatorStrategy::MoveCompact;
 
-void* NOP_alloc(size_t sizea) {
+void* NOP_alloc(size_t size) {
   // 全部おもらし。
-  return std::malloc(sizea);
+  return std::malloc(size);
 }
 
 bool is_cons(Value v) {
@@ -260,11 +260,11 @@ public:
       auto to = pages[free / par_page] + free % par_page;
       auto from = pages[scan / par_page] + scan % par_page;
       std::cout << "to: " << to << " from: " << from << " free: " << std::dec << free << " scan: " << scan << std::endl;
-      DEBUGMSG std::cout << "to content is " << show(to_Value(static_cast<void*>(to), nullptr)) << std::endl;
+      DEBUGMSG std::cout << "to content is " << show(to_Value(to, nullptr)) << std::endl;
 //      DEBUGMSG std::cout << "from content is " << show(to_Value(static_cast<void*>(to), nullptr)) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
       to->cell[0] = from->cell[0];
       to->cell[1] = from->cell[1];
-      *reinterpret_cast<std::uintptr_t*>(from) = reinterpret_cast<std::uintptr_t>(static_cast<void*>(to));
+      *reinterpret_cast<ConsCell**>(from) = to;
       // 引っ越し先のアドレスを元の住所に書いておく。1cellで2Value分の領域があり、Valueはstd::uintptr_tなので必ず収まる。
       // scanより後ろで、bitが立っているところは引越しした。
       ++free;
@@ -287,7 +287,7 @@ public:
           // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
           std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
           assert(voffset <= par_page);
-          e->cell[j] = static_cast<Value>(*(reinterpret_cast<std::uintptr_t*>(pages[vpage] + voffset)));
+          e->cell[j] = to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
         }
       }
     }
