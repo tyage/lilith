@@ -25,11 +25,11 @@ enum class AllocatorStrategy {
   MoveCompact,
 };
 
-AllocatorStrategy const strategy = AllocatorStrategy::NOP;
+AllocatorStrategy const strategy = AllocatorStrategy::MoveCompact;
 
-void* NOP_alloc(size_t size) {
+void* NOP_alloc(size_t sizea) {
   // 全部おもらし。
-  return std::malloc(size);
+  return std::malloc(sizea);
 }
 
 bool is_cons(Value v) {
@@ -192,7 +192,7 @@ public:
 } markSweepAllocator;
 */
 
-/*
+
 class MoveCompactAllocator {
   std::vector<bool> bitmap;
   size_t const par_page = 256; // 1024; // page にいくつのobjectがあるか
@@ -201,7 +201,7 @@ class MoveCompactAllocator {
   std::vector<ConsCell*> pages; // array of page
 public:
   MoveCompactAllocator() : bitmap{}, offset{par_page}, pages{} {}
-  Value* alloc_cons() {
+  ConsCell* alloc_cons() {
     if (offset > par_page - 1) { // このpageにはもう入らない。
       ConsCell* p = static_cast<ConsCell*>(std::malloc(page_size));
       if (p == nullptr) {
@@ -212,13 +212,13 @@ public:
     }
     auto addr = pages.back() + offset;
     ++offset;
-    return addr->cell;
+    return addr;
   }
-  size_t addr2page(Value* v) {
+  size_t addr2page(ConsCell* v) {
     for(size_t i{}; i < pages.size(); ++i) {
-      auto e = pages[i]->cell;
-      std::cout << "v: " << v << " e: " << e << " emax: " << (e + par_page * 2) << " emax-v: " << (e + par_page * 2) - v << std::endl;
-      if (e <= v && v < e + par_page * 2) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
+      auto base = pages[i];
+      std::cout << "v: " << v << " base: " << base << " emax: " << (base + par_page) << " emax-v: " << (base + par_page) - v << std::endl;
+      if (base <= v && v < base + par_page) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
         // O(n)かかってヤバそうなら考えましょう。
         // pageの増減時にしか変わらないのでなんとかできそう。
         return i;
@@ -232,12 +232,10 @@ public:
       return;
     }
     // consであれば、いずれかのiについて `pages[i]` 以上 `pages[i] + par_page * sizeof(Value)` 未満に入ってることがあるので、どのpageに属しているかがわかる。
-    Value* vp = to_ptr(v);
+    ConsCell* vp = to_ptr(v);
     auto vpage = addr2page(vp);
-    size_t voffset = vp - pages[vpage]->cell;
-    assert(voffset <= par_page * 2);
-    assert(voffset % 2 == 0);
-    voffset /= 2;
+    size_t voffset = vp - pages[vpage];
+    assert(voffset <= par_page);
     auto base = vpage * par_page + voffset;
     if (bitmap[base]) {
       DEBUGMSG std::cout << "already marked!" << std::endl;
@@ -279,16 +277,16 @@ public:
       for(size_t j{}; j < 2; ++j) {
         auto v = e->cell[j];
         if (!is_cons(v)) continue;
-        Value* vp = to_ptr(v);
+        ConsCell* vp = to_ptr(v);
         auto vpage = addr2page(vp);
-        size_t voffset = vp - pages[vpage]->cell;
+        size_t voffset = vp - pages[vpage];
         // assert(voffset <= par_page);
         std::cout << "vp: " << vp << " vpage: " << vpage << " v: " << std::hex << v << std::dec << std::endl;
         auto base = vpage * par_page + voffset;
         if (base > scan) { // 境界？
           // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
           std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-          assert(voffset <= par_page * 2);
+          assert(voffset <= par_page);
           e->cell[j] = static_cast<Value>(*(reinterpret_cast<std::uintptr_t*>(pages[vpage] + voffset)));
         }
       }
@@ -322,7 +320,6 @@ public:
     DEBUGMSG std::cout << std::endl;
   }
 } moveCompactAllocator;
-*/
 
 static int alloc_cnt = 0;
 
@@ -340,9 +337,9 @@ ConsCell* alloc_cons() {
   ++alloc_cnt;
   switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
-    return markSweepAllocator.alloc_cons();
+    return markSweepAllocator.alloc_cons(); */
   case AllocatorStrategy::MoveCompact:
-    return moveCompactAllocator.alloc_cons(); */
+    return moveCompactAllocator.alloc_cons();
   default:
     size_t const cell_size = sizeof(Value) * 2;
     return static_cast<ConsCell*>(alloc(cell_size));
@@ -354,10 +351,10 @@ void collect(Value rootset) {
   switch(strategy) { /*
   case AllocatorStrategy::MarkSweep:
     markSweepAllocator.collect(rootset);
-    return;
+    return; */
   case AllocatorStrategy::MoveCompact:
     moveCompactAllocator.collect(rootset);
-    return; */
+    return;
   default:
     ; // nop
   }
