@@ -26,7 +26,7 @@
 Value to_Value(void* v) {
   return reinterpret_cast<Value>(v);
 }
-Value to_Value(ConsCell* v, nullptr_t) {
+Value to_Value(ConsCell* v, std::nullptr_t) {
   return reinterpret_cast<Value>(v);
 }
 ConsCell* to_ptr(Value v) {
