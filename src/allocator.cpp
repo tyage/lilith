@@ -302,7 +302,7 @@ public:
       auto head = base->cell[0];
       auto tail = base->cell[1];
       std::cout << "addr index: " << std::dec << i << "(raw: " << base << ") mark: " << bitmap[i] << std::hex << " content: " << show(to_Value(base, nullptr))
-      << " (raw: " << static_cast<unsigned int>(head) << ", " << static_cast<unsigned int>(tail) << ")" << std::endl;
+      << " (raw: " << head << ", " << tail << ")" << std::endl;
     }
   }
   void collect(Value rootset) {
