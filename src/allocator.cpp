@@ -279,14 +279,14 @@ public:
         if (!is_cons(v)) continue;
         ConsCell* vp = to_ptr(v);
         auto vpage = addr2page(vp);
+        assert(vpage < pages.size());
         size_t voffset = vp - pages[vpage];
-        // assert(voffset <= par_page);
+        assert(voffset <= par_page);
         std::cout << "vp: " << vp << " vpage: " << vpage << " v: " << std::hex << v << std::dec << std::endl;
         auto base = vpage * par_page + voffset;
         if (base > scan) { // 境界？
           // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
           std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-          assert(voffset <= par_page);
           e->cell[j] = to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
         }
       }
