@@ -293,19 +293,19 @@ public:
     }
 
     // rootも引越ししてるかもしれないので、新たなrootを返す。
-        ConsCell* vp = to_ptr(root);
-        auto vpage = addr2page(vp);
-        assert(vpage < pages.size());
-        size_t voffset = vp - pages[vpage];
-        assert(voffset <= par_page);
-        std::cout << "rvp: " << vp << " rvpage: " << vpage << " rv: " << std::hex << root << std::dec << std::endl;
-        auto base = vpage * par_page + voffset;
-        if (base > scan) { // 境界？
-          // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
-          std::cout << "moved root found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-          return to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
-        }
-        return root;
+    ConsCell* vp = to_ptr(root);
+    auto vpage = addr2page(vp);
+    assert(vpage < pages.size());
+    size_t voffset = vp - pages[vpage];
+    assert(voffset <= par_page);
+    std::cout << "rvp: " << vp << " rvpage: " << vpage << " rv: " << std::hex << root << std::dec << std::endl;
+    auto base = vpage * par_page + voffset;
+    if (base > scan) { // 境界？
+      // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
+      std::cout << "moved root found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
+      return to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
+    }
+    return root;
   }
   void show_bitmap() {
     for(auto e: bitmap) {
