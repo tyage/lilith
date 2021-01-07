@@ -260,7 +260,7 @@ public:
       auto to = pages[free / par_page] + free % par_page;
       auto from = pages[scan / par_page] + scan % par_page;
       std::cout << "to: " << to << " from: " << from << " free: " << std::dec << free << " scan: " << scan << std::endl;
-      DEBUGMSG std::cout << "to content is " << show(to_Value(to, nullptr)) << std::endl;
+   //   DEBUGMSG std::cout << "to content is " << show(to_Value(to, nullptr)) << std::endl;
 //      DEBUGMSG std::cout << "from content is " << show(to_Value(static_cast<void*>(to), nullptr)) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
       to->cell[0] = from->cell[0];
       to->cell[1] = from->cell[1];
@@ -316,8 +316,9 @@ public:
       auto base = pages[i / par_page] + i % par_page;
       auto head = base->cell[0];
       auto tail = base->cell[1];
+      /*
       std::cout << "addr index: " << std::dec << i << "(raw: " << base << ") mark: " << bitmap[i] << std::hex << " content: " << show(to_Value(base, nullptr))
-      << " (raw: " << head << ", " << tail << ")" << std::endl;
+      << " (raw: " << head << ", " << tail << ")" << std::endl; */
     }
   }
   Value collect(Value root) {
