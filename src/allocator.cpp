@@ -328,11 +328,9 @@ public:
     show_bitmap();
     Value new_root = compact(root);
    // show_bitmap();
-    DEBUGMSG std::cout << "!!!!!!";
-    show_env(new_root);
-    DEBUGMSG std::cout << std::endl;
-    show(new_root);
-    DEBUGMSG std::cout << "old root: " << root << " new root: " <<  new_root << std::endl;
+    DEBUGMSG std::cout << "!!!!!!" << show_env(new_root) << std::endl;
+    DEBUGMSG std::cout << "!!!!!!" << show(new_root) << std::endl;
+    DEBUGMSG std::cout << "old root: " << std::hex << root << " new root: " <<  new_root << std::endl;
     return new_root;
   }
 } moveCompactAllocator;
