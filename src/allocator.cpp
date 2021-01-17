@@ -303,6 +303,8 @@ public:
     }
 
     offset = scan + 1;
+    // 以下の1行を入れると何故か動かない。
+    // for(size_t unused_page_cnt = heap.capacity() % ParPage - offset % ParPage; unused_page_cnt > 0; --unused_page_cnt) heap.release_page();
     return root;
   }
   void show_bitmap() {
