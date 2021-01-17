@@ -370,6 +370,6 @@ Value collect(Value root) {
   case AllocatorStrategy::MoveCompact:
     return moveCompactAllocator.collect(root);
   default:
-    return nil(); // nop
+    return root; // nop
   }
 }
