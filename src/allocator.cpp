@@ -201,12 +201,19 @@ public:
     assert(i < pages.size() * ParPage);
     return *(pages[i / ParPage] + i % ParPage);
   }
-  size_t addr2page(T* t) {
+  // O(n)かかってヤバそうなら考えましょう。
+  // pageの増減時にしか変わらないのでなんとかできそう。
+  size_t addr2page(T const* t) {
     for(size_t i{}; i < pages.size(); ++i) {
-      if (pages[i] <= t && t < pages[i] + ParPage) return i;
+      if (pages[i] <= t && t < pages[i] + ParPage) return i; // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
     }
   }
-  size_t get_index(T*) { /* unimpled */ }
+  size_t get_index(T const* t) {
+    size_t page = addr2page(t);
+    size_t offset = t - pages[page];
+    assert(offset <= ParPage);
+    return page * ParPage + offset;
+  }
   void alloc_page() {
     T* p = static_cast<T*>(std::malloc(sizeof(T) * ParPage));
     if(!p) throw std::bad_alloc();
@@ -216,39 +223,21 @@ public:
     std::free(pages.back());
     pages.pop_back();
   }
+  size_t capacity() { return pages.size() * ParPage; }
 };
 
 class MoveCompactAllocator {
   std::vector<bool> bitmap;
-  size_t const par_page = 256; // 1024; // page にいくつのobjectがあるか
-  size_t const page_size = par_page * sizeof(ConsCell);
+  size_t static constexpr ParPage = 256;
+  PandoraBox<ConsCell, ParPage> heap;
   size_t offset; // page先頭からのオフセット
-  std::vector<ConsCell*> pages; // array of page
 public:
-  MoveCompactAllocator() : bitmap{}, offset{par_page}, pages{} {}
+  MoveCompactAllocator() : bitmap{}, offset{}, heap{} {}
   ConsCell* alloc_cons() {
-    if (offset > par_page - 1) { // このpageにはもう入らない。
-      ConsCell* p = static_cast<ConsCell*>(std::malloc(page_size));
-      if (p == nullptr) {
-        throw std::bad_alloc();
-      }
-      pages.push_back(p);
-      offset = 0;
-    }
-    auto addr = pages.back() + offset;
+    if (offset >= heap.capacity()) heap.alloc_page();
+    auto addr = &heap[offset];
     ++offset;
     return addr;
-  }
-  size_t addr2page(ConsCell* v) {
-    for(size_t i{}; i < pages.size(); ++i) {
-      auto base = pages[i];
-      std::cout << "v: " << v << " base: " << base << " emax: " << (base + par_page) << " emax-v: " << (base + par_page) - v << std::endl;
-      if (base <= v && v < base + par_page) { // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
-        // O(n)かかってヤバそうなら考えましょう。
-        // pageの増減時にしか変わらないのでなんとかできそう。
-        return i;
-      }
-    }
   }
   void mark_cons(Value v) {
     DEBUGMSG std::cout << "marking: " << show(v) << " addr: " << to_ptr(v) << std::endl;
@@ -256,25 +245,20 @@ public:
       DEBUGMSG std::cout << "not cons skip! " << std::endl;
       return;
     }
-    // consであれば、いずれかのiについて `pages[i]` 以上 `pages[i] + par_page * sizeof(Value)` 未満に入ってることがあるので、どのpageに属しているかがわかる。
     ConsCell* vp = to_ptr(v);
-    auto vpage = addr2page(vp);
-    size_t voffset = vp - pages[vpage];
-    assert(voffset <= par_page);
-    auto base = vpage * par_page + voffset;
+    auto base = heap.get_index(vp);
     if (bitmap[base]) {
       DEBUGMSG std::cout << "already marked!" << std::endl;
       return;
     }
     bitmap[base] = true;
-    std::cout << "marked at: " << base << " vpage: " << vpage << " voffset: " << voffset << " vp: " << vp << std::endl;
 
     mark_cons(car(v));
     mark_cons(cdr(v));
   }
   Value compact(Value root) {
     size_t free = 0;
-    size_t scan = pages.size() * par_page - 1;
+    size_t scan = heap.capacity() - 1;
     while(free != scan) {
       if (free > scan) break; // このへんも境界怪しい。
       while(bitmap[free]) {
@@ -282,8 +266,8 @@ public:
       }
       while(!bitmap[scan]) --scan;
       // https://gyazo.com/d778d19b52397d0a7930a01ebba11695
-      auto to = pages[free / par_page] + free % par_page;
-      auto from = pages[scan / par_page] + scan % par_page;
+      auto to = &heap[free];
+      auto from = &heap[scan];
       std::cout << "to: " << to << " from: " << from << " free: " << std::dec << free << " scan: " << scan << std::endl;
    //   DEBUGMSG std::cout << "to content is " << show(to_Value(to, nullptr)) << std::endl;
 //      DEBUGMSG std::cout << "from content is " << show(to_Value(static_cast<void*>(to), nullptr)) << "(is nil?: " << (nil() == from->cell[0]) << ")" << std::endl;
@@ -298,37 +282,25 @@ public:
     std::cout << "scan is " << std::dec << scan << std::endl;
 
     for(size_t i{}; i < scan; ++i) {
-      auto e = pages[i / par_page] + i % par_page;
+      auto e = &heap[i];
       for(size_t j{}; j < 2; ++j) {
         auto v = e->cell[j];
         if (!is_cons(v)) continue;
         ConsCell* vp = to_ptr(v);
-        auto vpage = addr2page(vp);
-        assert(vpage < pages.size());
-        size_t voffset = vp - pages[vpage];
-        assert(voffset <= par_page);
-        std::cout << "vp: " << vp << " vpage: " << vpage << " v: " << std::hex << v << std::dec << std::endl;
-        auto base = vpage * par_page + voffset;
+        auto base = heap.get_index(vp);
         if (base > scan) { // 境界？
-          // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
-          std::cout << "moved object found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-          e->cell[j] = to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
+          // これread/writeバリアでやったほうがいいかもしれない。
+          e->cell[j] = to_Value(*(reinterpret_cast<ConsCell**>(&heap[base])), nullptr);
         }
       }
     }
 
     // rootも引越ししてるかもしれないので、新たなrootを返す。
     ConsCell* vp = to_ptr(root);
-    auto vpage = addr2page(vp);
-    assert(vpage < pages.size());
-    size_t voffset = vp - pages[vpage];
-    assert(voffset <= par_page);
-    std::cout << "rvp: " << vp << " rvpage: " << vpage << " rv: " << std::hex << root << std::dec << std::endl;
-    auto base = vpage * par_page + voffset;
+    auto base = heap.get_index(vp);
     if (base > scan) { // 境界？
-      // これread/writeバリアでやったほうがいいかもしれない。そもそも動いてないけど……。
-      std::cout << "moved root found!: " << base << " vpage: " << vpage << " voffset: " << voffset << std::endl;
-      return to_Value(*(reinterpret_cast<ConsCell**>(pages[vpage] + voffset)), nullptr);
+      // これread/writeバリアでやったほうがいいかもしれない。
+      return to_Value(*(reinterpret_cast<ConsCell**>(&heap[base])), nullptr);
     }
     return root;
   }
@@ -347,7 +319,8 @@ public:
     }
   }
   Value collect(Value root) {
-    bitmap = std::vector<bool>(pages.size() * par_page);
+    assert(heap.capacity() > 0); // allocする前にcollectすることなんて無いでしょw
+    bitmap = std::vector<bool>(heap.capacity());
     mark_cons(root);
     DEBUGMSG std::cout << "marked bit cnt is " << std::count(begin(bitmap), end(bitmap), true) << std::endl;
     show_bitmap();
