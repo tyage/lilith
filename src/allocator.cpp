@@ -301,6 +301,8 @@ public:
       // これread/writeバリアでやったほうがいいかもしれない。
       return to_Value(*(reinterpret_cast<ConsCell**>(&heap[base])), nullptr);
     }
+
+    offset = scan + 1;
     return root;
   }
   void show_bitmap() {
