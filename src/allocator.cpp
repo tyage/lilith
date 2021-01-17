@@ -207,6 +207,7 @@ public:
     for(size_t i{}; i < pages.size(); ++i) {
       if (pages[i] <= t && t < pages[i] + ParPage) return i; // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
     }
+    [[unlikely]] throw "never";
   }
   size_t get_index(T const* t) {
     size_t page = addr2page(t);
