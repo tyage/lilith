@@ -312,11 +312,11 @@ public:
       std::cout << (e ? '.' : ' ');
     }
     std::cout << "| kokomade" << std::endl;
-    for(size_t i{}; i < bitmap.size(); ++i) {
+    for(size_t i{}; i < bitmap.size(); ++i) { /*
       auto base = pages[i / par_page] + i % par_page;
       auto head = base->cell[0];
       auto tail = base->cell[1];
-      /*
+
       std::cout << "addr index: " << std::dec << i << "(raw: " << base << ") mark: " << bitmap[i] << std::hex << " content: " << show(to_Value(base, nullptr))
       << " (raw: " << head << ", " << tail << ")" << std::endl; */
     }
