@@ -229,7 +229,7 @@ public:
 
 class MoveCompactAllocator {
   std::vector<bool> bitmap;
-  size_t static constexpr ParPage = 256;
+  size_t static constexpr ParPage = 2;
   PandoraBox<ConsCell, ParPage> heap;
   size_t offset;
 public:
