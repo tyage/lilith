@@ -192,6 +192,31 @@ public:
 } markSweepAllocator;
 */
 
+// indexでアクセスできるメモリ
+template<class T, size_t ParPage = 256> class PandoraBox {
+  std::vector<T*> pages;
+public:
+  PandoraBox() : pages{} {}
+  T& operator[](size_t i) {
+    assert(i < pages.size() * ParPage);
+    return *(pages[i / ParPage] + i % ParPage);
+  }
+  size_t addr2page(T* t) {
+    for(size_t i{}; i < pages.size(); ++i) {
+      if (pages[i] <= t && t < pages[i] + ParPage) return i;
+    }
+  }
+  size_t get_index(T*) { /* unimpled */ }
+  void alloc_page() {
+    T* p = static_cast<T*>(std::malloc(sizeof(T) * ParPage));
+    if(!p) throw std::bad_alloc();
+    pages.push_back(p);
+  }
+  void release_page() {
+    std::free(pages.back());
+    pages.pop_back();
+  }
+};
 
 class MoveCompactAllocator {
   std::vector<bool> bitmap;
