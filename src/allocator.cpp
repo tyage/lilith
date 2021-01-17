@@ -231,9 +231,9 @@ class MoveCompactAllocator {
   std::vector<bool> bitmap;
   size_t static constexpr ParPage = 256;
   PandoraBox<ConsCell, ParPage> heap;
-  size_t offset; // page先頭からのオフセット
+  size_t offset;
 public:
-  MoveCompactAllocator() : bitmap{}, offset{}, heap{} {}
+  MoveCompactAllocator() : bitmap{}, heap{}, offset{} {}
   ConsCell* alloc_cons() {
     if (offset >= heap.capacity()) heap.alloc_page();
     auto addr = &heap[offset];
@@ -262,9 +262,7 @@ public:
     size_t scan = heap.capacity() - 1;
     while(free != scan) {
       if (free > scan) break; // このへんも境界怪しい。
-      while(bitmap[free]) {
-        ++free;
-      }
+      while(bitmap[free]) ++free;
       while(!bitmap[scan]) --scan;
       // https://gyazo.com/d778d19b52397d0a7930a01ebba11695
       auto to = &heap[free];
