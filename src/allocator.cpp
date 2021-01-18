@@ -193,30 +193,30 @@ public:
 */
 
 // indexでアクセスできるメモリ
-template<class T, size_t ParPage = 256> class PandoraBox {
+template<class T, size_t PerPage = 256> class PandoraBox {
   std::vector<T*> pages;
 public:
   PandoraBox() : pages{} {}
   T& operator[](size_t i) {
-    assert(i < pages.size() * ParPage);
-    return *(pages[i / ParPage] + i % ParPage);
+    assert(i < pages.size() * PerPage);
+    return *(pages[i / PerPage] + i % PerPage);
   }
   // O(n)かかってヤバそうなら考えましょう。
   // pageの増減時にしか変わらないのでなんとかできそう。
   size_t addr2page(T const* t) {
     for(size_t i{}; i < pages.size(); ++i) {
-      if (pages[i] <= t && t < pages[i] + ParPage) return i; // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
+      if (pages[i] <= t && t < pages[i] + PerPage) return i; // ここの比較本当はアドレスでやるとダメなので整数型にしないといけない気はするけど実際動かないことはなさそう。
     }
     [[unlikely]] throw "never";
   }
   size_t get_index(T const* t) {
     size_t page = addr2page(t);
     size_t offset = t - pages[page];
-    assert(offset <= ParPage);
-    return page * ParPage + offset;
+    assert(offset <= PerPage);
+    return page * PerPage + offset;
   }
   void alloc_page() {
-    T* p = static_cast<T*>(std::malloc(sizeof(T) * ParPage));
+    T* p = static_cast<T*>(std::malloc(sizeof(T) * PerPage));
     if(!p) throw std::bad_alloc();
     pages.push_back(p);
   }
@@ -224,13 +224,13 @@ public:
     std::free(pages.back());
     pages.pop_back();
   }
-  size_t capacity() { return pages.size() * ParPage; }
+  size_t capacity() { return pages.size() * PerPage; }
 };
 
 class MoveCompactAllocator {
   std::vector<bool> bitmap;
-  size_t static constexpr ParPage = 2;
-  PandoraBox<ConsCell, ParPage> heap;
+  size_t static constexpr PerPage = 2;
+  PandoraBox<ConsCell, PerPage> heap;
   size_t offset;
 public:
   MoveCompactAllocator() : bitmap{}, heap{}, offset{} {}
@@ -304,7 +304,7 @@ public:
 
     offset = scan + 1;
     // 以下の1行を入れると何故か動かない。
-    // for(size_t unused_page_cnt = heap.capacity() % ParPage - offset % ParPage; unused_page_cnt > 0; --unused_page_cnt) heap.release_page();
+    // for(size_t unused_page_cnt = heap.capacity() % PerPage - offset % PerPage; unused_page_cnt > 0; --unused_page_cnt) heap.release_page();
     return root;
   }
   void show_bitmap() {
