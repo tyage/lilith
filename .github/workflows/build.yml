@@ -6,6 +6,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Create local changes
+        run: |
+          echo test > newfile
+          git add newfile
+      - name: Commit files
+        run: |
+         　git config --local user.email "namatyage@gmail.com"
+         　git config --local user.name "tyage"
+         　git commit -m "Add changes" -a
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
