@@ -15,11 +15,11 @@ jobs:
           git add newfile
       - name: Commit files
         run: |
-           apt update -qq
-           apt install git
-         　git config --local user.email "namatyage@gmail.com"
-         　git config --local user.name "tyage"
-         　git commit -m "Add changes" -a
+          apt update -qq
+          apt install git
+          git config --local user.email "namatyage@gmail.com"
+          git config --local user.name "tyage"
+          git commit -m "Add changes" -a
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
