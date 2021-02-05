@@ -15,6 +15,8 @@ jobs:
           git add newfile
       - name: Commit files
         run: |
+           apt update -qq
+           apt install git
          　git config --local user.email "namatyage@gmail.com"
          　git config --local user.name "tyage"
          　git commit -m "Add changes" -a
